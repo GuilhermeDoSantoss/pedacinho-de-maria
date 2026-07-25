@@ -1,4 +1,4 @@
-package com.pedacinhodemaria.pedacinho_backend;
+package com.pedacinhodemaria;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;

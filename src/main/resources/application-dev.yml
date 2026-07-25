@@ -1,0 +1,12 @@
+# Perfil de desenvolvimento local. Este arquivo NÃO
+# sobrescreve mongodb.uri: herda ${MONGODB_URI} de application.yml, que você
+# aponta para um cluster/banco de dev no Atlas via variável de ambiente
+# (ex.: um banco separado "pedacinho_dev" no mesmo cluster, ou um cluster
+# free-tier dedicado a dev — sua escolha, não é decisão do código).
+logging:
+  level:
+    com.pedacinhodemaria: DEBUG
+    org.springframework.web.socket: DEBUG
+
+app:
+  order-retention-days: 7 # menor em dev, pra não acumular lixo de teste

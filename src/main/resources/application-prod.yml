@@ -1,0 +1,14 @@
+# Perfil de produção. Propositalmente vazio de credenciais — MONGODB_URI,
+# CORS_ALLOWED_ORIGINS e ORDER_RETENTION_DAYS vêm 100% de variáveis de
+# ambiente (injetadas pelo docker-compose/EC2), nunca de arquivo versionado
+# no repositório. Isso é o requisito de segurança "nenhuma credencial no
+# código-fonte" sendo cumprido estruturalmente, não por convenção.
+management:
+  endpoint:
+    health:
+      show-details: never # não vaza detalhes internos (versão do Mongo, etc.) publicamente
+
+logging:
+  level:
+    com.pedacinhodemaria: INFO
+    org.springframework.web.socket: WARN
