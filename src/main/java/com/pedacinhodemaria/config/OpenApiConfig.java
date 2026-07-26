@@ -13,7 +13,7 @@ public class OpenApiConfig {
     public OpenAPI pedacinhoOpenApi() {
         return new OpenAPI().info(new Info()
                 .title("Pedacinho de Maria — API")
-                .description("Sistema de pedidos do restaurante. Fase 1: cardápio, pedidos e tempo real.")
+                .description("Sistema de pedidos do restaurante.")
                 .version("v1")
                 .contact(new Contact().name("Guilherme")));
     }
