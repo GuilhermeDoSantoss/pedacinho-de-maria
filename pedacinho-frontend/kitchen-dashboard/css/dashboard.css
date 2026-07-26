@@ -1,0 +1,282 @@
+:root {
+    /* Tema escuro de alto contraste — decisão funcional, não estética: uma
+       tela de cozinha fica exposta a luz forte e é lida de longe. A cor
+       primária usa o vermelho suave da marca (mesmo tom do Customer App),
+       ajustado para ter contraste suficiente sobre fundo escuro. */
+    --color-bg: #1F1614;
+    --color-surface: #2B1F1C;
+    --color-surface-elevated: #382924;
+    --color-text: #F5EAE6;
+    --color-text-muted: #B39C94;
+    --color-border: #4A362F;
+    --color-primary: #E08579;
+
+    --color-waiting: #E08579;
+    --color-preparing: #7FA89A;
+    --color-ready: #6B9080;
+    --color-delivered: #6B5D56;
+
+    --color-timer-green: #6B9080;
+    --color-timer-yellow: #D9A441;
+    --color-timer-red: #D1554A;
+}
+
+body {
+    background: var(--color-bg);
+    color: var(--color-text);
+}
+
+.shift-gate__flower,
+.board__flower {
+    width: 44px;
+    height: 44px;
+}
+
+.board__flower {
+    width: 32px;
+    height: 32px;
+}
+
+/* ---------- Gate de início de turno ---------- */
+
+.shift-gate {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.shift-gate__content h1 {
+    font-family: var(--font-display);
+    font-size: 2rem;
+    color: var(--color-primary);
+    margin-bottom: var(--space-xs);
+}
+
+.shift-gate__content p {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-xl);
+}
+
+.shift-gate .btn--primary {
+    background: var(--color-primary);
+    color: var(--color-bg);
+    font-weight: 800;
+    /* Maior que o btn--large padrão: este é o único botão da tela e precisa
+       ser visível do outro lado de uma cozinha, não só "grande o suficiente
+       pra clicar". */
+    padding: 2rem 3.5rem;
+    font-size: 2rem;
+    box-shadow: 0 8px 24px rgba(224, 133, 121, 0.35);
+    animation: shift-button-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes shift-button-pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+}
+
+/* ---------- Cabeçalho do board ---------- */
+
+.board__header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.board__title {
+    font-family: var(--font-display);
+    font-size: 1.3rem;
+    color: var(--color-primary);
+}
+
+.board-error {
+    margin: var(--space-md) var(--space-lg) 0;
+    padding: var(--space-sm) var(--space-md);
+    background: var(--color-timer-red);
+    border-radius: var(--radius-sm);
+}
+
+/* ---------- Colunas ---------- */
+
+.columns {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: var(--space-md);
+    padding: var(--space-lg);
+}
+
+.column {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    min-height: 60vh;
+    border-top: 4px solid transparent;
+}
+
+#column-waiting { border-top-color: var(--color-waiting); }
+#column-preparing { border-top-color: var(--color-preparing); }
+#column-ready { border-top-color: var(--color-ready); }
+#column-delivered { border-top-color: var(--color-delivered); }
+
+.column__title {
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-md);
+    font-weight: 700;
+}
+
+.column__list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+/* ---------- Ticket ---------- */
+
+.ticket {
+    background: var(--color-surface-elevated);
+    border-radius: var(--radius-sm);
+    padding: var(--space-md);
+    border: 1px solid var(--color-border);
+}
+
+.ticket[data-timer-state="RED"] {
+    border-color: var(--color-timer-red);
+    animation: ticket-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes ticket-pulse {
+    0%, 100% { box-shadow: 0 0 0 0 rgba(192, 57, 43, 0.5); }
+    50% { box-shadow: 0 0 0 6px rgba(192, 57, 43, 0); }
+}
+
+.ticket__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-sm);
+}
+
+.ticket__code {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 0.03em;
+}
+
+.ticket__timer {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    padding: 2px 10px;
+    border-radius: 999px;
+    background: var(--color-timer-green);
+}
+
+.ticket[data-timer-state="YELLOW"] .ticket__timer { background: var(--color-timer-yellow); color: var(--color-bg); }
+.ticket[data-timer-state="RED"] .ticket__timer { background: var(--color-timer-red); }
+
+.ticket__customer {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 2px;
+}
+
+.ticket__meal {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-sm);
+    font-size: 1rem;
+}
+
+.ticket__side-dish {
+    color: var(--color-text);
+    font-size: 0.95rem;
+    margin-bottom: var(--space-xs);
+}
+
+.ticket__extras {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-sm);
+    font-style: italic;
+}
+
+.ticket__meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-xs);
+    margin-bottom: var(--space-sm);
+}
+
+.ticket__badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--color-border);
+    color: var(--color-text);
+}
+
+.ticket__badge--takeaway {
+    background: var(--color-waiting);
+    color: var(--color-bg);
+}
+
+.ticket__badge--dine_in {
+    background: var(--color-preparing);
+}
+
+.ticket__cutlery,
+.ticket__observation {
+    font-size: 0.9rem;
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-xs);
+}
+
+.ticket__observation {
+    font-style: italic;
+}
+
+.ticket__price {
+    font-weight: 700;
+    margin: var(--space-sm) 0;
+}
+
+.ticket__action {
+    width: 100%;
+    padding: var(--space-sm);
+    border-radius: var(--radius-sm);
+    background: var(--color-primary);
+    color: var(--color-bg);
+    font-weight: 700;
+    margin-top: var(--space-xs);
+}
+
+.ticket__action:hover {
+    opacity: 0.9;
+}
+
+/* ---------- Responsivo ---------- */
+
+@media (max-width: 1100px) {
+    .columns {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    .columns {
+        grid-template-columns: 1fr;
+        padding: var(--space-md);
+    }
+
+    .board__header {
+        padding: var(--space-md);
+    }
+}

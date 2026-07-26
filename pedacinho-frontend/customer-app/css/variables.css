@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&display=swap');
+
+:root {
+    /* Identidade da marca: vermelho suave + branco suave, com a flor
+       vermelha como elemento de reconhecimento. "Suave" aqui significa baixa
+       saturação e alto valor — quente e acolhedor, não um vermelho de alerta
+       ou de fast-food agressivo. */
+    --color-bg: #FDF8F6;
+    --color-surface: #FFFFFF;
+    --color-text: #3D2C28;
+    --color-text-muted: #8C7972;
+    --color-primary: #C97066;
+    --color-primary-hover: #B05A50;
+    --color-accent: #D98F86;
+    --color-success: #6B9080;
+    --color-success-bg: #EAF2EE;
+    --color-error: #C0574C;
+    --color-error-bg: #FCEEEC;
+    --color-border: #F0DFDA;
+
+    --font-display: 'Fraunces', Georgia, serif;
+    --font-body: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+
+    --space-xs: 0.5rem;
+    --space-sm: 0.75rem;
+    --space-md: 1.25rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+
+    --radius-sm: 8px;
+    --radius-md: 14px;
+
+    --shadow-card: 0 2px 8px rgba(61, 44, 40, 0.06);
+    --shadow-card-hover: 0 6px 20px rgba(61, 44, 40, 0.12);
+
+    --max-content-width: 480px;
+}

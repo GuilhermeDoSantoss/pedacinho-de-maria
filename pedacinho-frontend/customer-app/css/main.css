@@ -1,0 +1,573 @@
+body {
+    background: var(--color-bg);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    line-height: 1.5;
+}
+
+#app {
+    max-width: var(--max-content-width);
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+/* ---------- Cabeçalho ---------- */
+
+.app-header {
+    padding: var(--space-xl) var(--space-md) var(--space-lg);
+    text-align: center;
+    background: linear-gradient(180deg, color-mix(in srgb, var(--color-primary) 6%, transparent), transparent);
+}
+
+.app-header__flower {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto var(--space-sm);
+}
+
+.app-header__title {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 2rem;
+    color: var(--color-primary);
+    letter-spacing: -0.01em;
+}
+
+.app-header__tagline {
+    color: var(--color-text-muted);
+    font-size: 0.95rem;
+    margin-top: var(--space-xs);
+}
+
+main {
+    flex: 1;
+    padding: 0 var(--space-md) var(--space-xl);
+}
+
+/* Cada etapa entra com um fade + leve deslocamento — o reset.css já reduz
+   isso a 0.01ms sob prefers-reduced-motion, então não precisa de tratamento
+   duplicado aqui. */
+.step {
+    animation: step-enter 0.25s ease-out;
+}
+
+@keyframes step-enter {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ---------- Etapas do wizard ---------- */
+
+.step__title {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.4rem;
+    margin-bottom: var(--space-xs);
+}
+
+.step__subtitle {
+    color: var(--color-text-muted);
+    margin-bottom: var(--space-md);
+}
+
+.step__actions {
+    display: flex;
+    gap: var(--space-sm);
+    margin-top: var(--space-lg);
+}
+
+.step__actions .btn {
+    flex: 1;
+}
+
+/* ---------- Estado de carregamento do cardápio ---------- */
+
+.menu-state {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: var(--space-xl) 0;
+}
+
+.menu-state--error {
+    color: var(--color-error);
+}
+
+.menu-empty-state {
+    text-align: center;
+    color: var(--color-text-muted);
+    padding: var(--space-lg) 0;
+}
+
+/* ---------- Cards de prato (elemento de assinatura visual) ---------- */
+/* Referência a um ticket de pedido recortado à mão — a borda inferior
+   serrilhada é o único momento de ousadia visual da tela; todo o resto
+   permanece disciplinado ao redor dela. */
+
+.meal-grid {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+}
+
+.meal-card {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    box-shadow: var(--shadow-card);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+    position: relative;
+}
+
+.meal-card:hover,
+.meal-card:focus-visible {
+    box-shadow: var(--shadow-card-hover);
+    transform: translateY(-2px);
+}
+
+.meal-card:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.meal-card__image {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+    background: var(--color-border);
+    transition: transform 0.3s ease;
+}
+
+.meal-card:hover .meal-card__image {
+    transform: scale(1.04);
+}
+
+.meal-card__content {
+    padding: var(--space-md);
+    position: relative;
+}
+
+/* Borda serrilhada entre a imagem e o conteúdo, como se o ticket tivesse sido destacado. */
+.meal-card__content::before {
+    content: '';
+    position: absolute;
+    top: -6px;
+    left: 0;
+    right: 0;
+    height: 12px;
+    background: linear-gradient(135deg, var(--color-surface) 50%, transparent 50%),
+                linear-gradient(45deg, var(--color-surface) 50%, transparent 50%);
+    background-size: 12px 12px;
+    background-position: bottom;
+}
+
+.meal-card__name {
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1.15rem;
+    margin-bottom: var(--space-xs);
+}
+
+.meal-card__description {
+    color: var(--color-text-muted);
+    font-size: 0.9rem;
+    margin-bottom: var(--space-sm);
+}
+
+.meal-card__footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.meal-card__price {
+    font-weight: 700;
+    color: var(--color-primary);
+}
+
+.meal-card__prep-time {
+    font-size: 0.8rem;
+    color: var(--color-accent);
+    font-weight: 600;
+}
+
+/* ---------- Acompanhamento ---------- */
+
+.side-dish-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-sm);
+}
+
+.side-dish-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-sm);
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-align: center;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+.side-dish-card--selected {
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+    transform: translateY(-2px);
+}
+
+.side-dish-card__image {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 50%;
+}
+
+.side-dish-card__name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.side-dish-card__price {
+    font-size: 0.8rem;
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+.side-dish-card__price--included {
+    color: var(--color-success);
+}
+
+/* ---------- Extras ---------- */
+
+.extras-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.extra-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: var(--space-md);
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 0.15s ease;
+}
+
+.extra-item:has(input:checked) {
+    border-color: var(--color-primary);
+}
+
+.extra-item input {
+    accent-color: var(--color-primary);
+    width: 20px;
+    height: 20px;
+}
+
+.extra-item__name {
+    flex: 1;
+    font-weight: 500;
+}
+
+.extra-item__price {
+    color: var(--color-primary);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.extras-total {
+    text-align: right;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin-top: var(--space-md);
+    font-size: 1.05rem;
+}
+
+/* ---------- Confirmação de prato ---------- */
+
+.confirm-meal__price {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin: var(--space-sm) 0;
+}
+
+.confirm-meal__prep-time {
+    color: var(--color-accent);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* ---------- Formulários ---------- */
+
+.form-field {
+    margin-bottom: var(--space-md);
+}
+
+.form-input {
+    width: 100%;
+    padding: var(--space-sm) var(--space-md);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface);
+    font-size: 1rem;
+    transition: border-color 0.15s ease;
+}
+
+.form-input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-error {
+    color: var(--color-error);
+    font-size: 0.85rem;
+    margin-top: var(--space-xs);
+}
+
+/* ---------- Tipo de pedido / Cutelaria ---------- */
+
+.order-type-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-xs);
+}
+
+.order-type-option {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-lg) var(--space-md);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    text-align: center;
+    font-weight: 600;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.order-type-option__icon {
+    font-size: 2rem;
+}
+
+.order-type-option:has(input:checked) {
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+    transform: translateY(-2px);
+}
+
+/* O input em si é invisível (opacity:0) para dar lugar ao card customizado,
+   mas precisa continuar focável por teclado — sem isso, navegação via Tab
+   perde completamente o indicador de foco, porque o elemento focado não
+   tem nenhuma representação visual própria. */
+.order-type-option:has(input:focus-visible) {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.order-type-option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+/* ---------- Forma de pagamento ---------- */
+
+.payment-options {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-sm);
+}
+
+.payment-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: var(--space-md);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.payment-option:has(input:checked) {
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+}
+
+.payment-option input {
+    accent-color: var(--color-primary);
+}
+
+/* ---------- Botões ---------- */
+
+.btn {
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: background 0.15s ease, opacity 0.15s ease;
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn--primary {
+    background: var(--color-primary);
+    color: var(--color-surface);
+}
+
+.btn--primary:hover:not(:disabled) {
+    background: var(--color-primary-hover);
+}
+
+.btn--secondary {
+    background: transparent;
+    color: var(--color-text);
+    border: 2px solid var(--color-border);
+}
+
+.btn--secondary:hover {
+    border-color: var(--color-text-muted);
+}
+
+/* ---------- Confirmação final ---------- */
+
+.confirmation {
+    text-align: center;
+    padding-top: var(--space-lg);
+}
+
+.confirmation__icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    font-size: 1.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto var(--space-md);
+}
+
+.confirmation__title {
+    font-family: var(--font-display);
+    font-size: 1.5rem;
+    margin-bottom: var(--space-xs);
+}
+
+.confirmation__order-code {
+    font-family: var(--font-display);
+    font-size: 1.1rem;
+    color: var(--color-accent);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    margin-bottom: var(--space-lg);
+}
+
+.confirmation__details {
+    text-align: left;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    box-shadow: var(--shadow-card);
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: var(--space-xs) var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.confirmation__details dt {
+    color: var(--color-text-muted);
+    font-size: 0.85rem;
+}
+
+.confirmation__details dd {
+    font-weight: 600;
+    text-align: right;
+}
+
+.confirmation__total-value {
+    color: var(--color-primary);
+    font-size: 1.15rem;
+    font-weight: 800;
+}
+
+.confirmation__status {
+    margin-bottom: var(--space-lg);
+}
+
+.status-badge {
+    display: inline-block;
+    padding: var(--space-xs) var(--space-md);
+    border-radius: 999px;
+    background: var(--color-accent);
+    color: var(--color-surface);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.status-badge[data-status="READY"] {
+    background: var(--color-success);
+}
+
+.status-badge[data-status="CANCELLED"] {
+    background: var(--color-error);
+}
+
+/* ---------- Responsivo ---------- */
+
+/* Telas muito estreitas (320-374px, ex. iPhone SE): 2 colunas de texto tipo
+   "Cartão de crédito" / "Consumir no local" ficam apertadas demais para
+   leitura confortável — empilha em 1 coluna só nesse intervalo específico.
+   Ajuste pontual de responsividade, não uma mudança de layout geral. */
+@media (max-width: 374px) {
+    .order-type-options,
+    .payment-options {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (min-width: 640px) {
+    :root {
+        --max-content-width: 600px;
+    }
+
+    .meal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (min-width: 1024px) {
+    :root {
+        --max-content-width: 800px;
+    }
+}
