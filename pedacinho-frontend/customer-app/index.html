@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+    <meta name="description" content="Peça seu prato no Pedacinhos de Maria">
+    <title>Pedacinho de Maria</title>
+    <link rel="stylesheet" href="css/reset.css">
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+<div id="app">
+    <header class="app-header">
+        <img src="assets/icons/flower.svg" alt="" class="app-header__flower" aria-hidden="true">
+        <h1 class="app-header__title">Pedacinho de Maria</h1>
+        <p class="app-header__tagline">Comida caseira, feita com carinho</p>
+    </header>
+
+    <main>
+        <!-- Etapa 0: Cardápio -->
+        <section id="step-menu" class="step">
+            <h2 class="step__title">Cardápio de hoje</h2>
+            <p id="menu-loading" class="menu-state">Carregando cardápio...</p>
+            <p id="menu-error" class="menu-state menu-state--error hidden">
+                Não foi possível carregar o cardápio. Verifique sua conexão e recarregue a página.
+            </p>
+            <div id="menu-list" class="meal-grid hidden"></div>
+        </section>
+
+        <!-- Etapa 1: Confirmar prato escolhido -->
+        <section id="step-confirm-meal" class="step hidden">
+            <h2 class="step__title" id="confirm-meal-name"></h2>
+            <p id="confirm-meal-description" class="step__subtitle"></p>
+            <p id="confirm-meal-price" class="confirm-meal__price"></p>
+            <p id="confirm-meal-prep-time" class="confirm-meal__prep-time"></p>
+
+            <div class="step__actions">
+                <button id="confirm-meal-back" type="button" class="btn btn--secondary">Voltar</button>
+                <button id="confirm-meal-continue" type="button" class="btn btn--primary">Continuar</button>
+            </div>
+        </section>
+
+        <!-- Etapa 2: Acompanhamento (obrigatório) -->
+        <section id="step-side-dish" class="step hidden">
+            <h2 class="step__title">Escolha o acompanhamento</h2>
+            <div id="side-dish-list" class="side-dish-grid"></div>
+            <p id="side-dish-error" class="form-error hidden"></p>
+            <div class="step__actions">
+                <button id="side-dish-back" type="button" class="btn btn--secondary">Voltar</button>
+                <button id="side-dish-continue" type="button" class="btn btn--primary">Continuar</button>
+            </div>
+        </section>
+
+        <!-- Etapa 3: Extras (opcional) -->
+        <section id="step-extras" class="step hidden">
+            <h2 class="step__title">Quer adicionar algum extra?</h2>
+            <p class="step__subtitle">Opcional — escolha quantos quiser</p>
+            <div id="extras-list" class="extras-list"></div>
+            <p id="extras-error" class="form-error hidden"></p>
+            <p id="extras-estimated-total" class="extras-total"></p>
+            <div class="step__actions">
+                <button id="extras-back" type="button" class="btn btn--secondary">Voltar</button>
+                <button id="extras-continue" type="button" class="btn btn--primary">Continuar</button>
+            </div>
+        </section>
+
+        <!-- Etapa 4: Nome -->
+        <section id="step-name" class="step hidden">
+            <h2 class="step__title">Qual é o seu nome?</h2>
+            <div class="form-field">
+                <input id="input-customer-name" type="text" class="form-input"
+                       placeholder="Seu nome" maxlength="60" autocomplete="name">
+                <p id="name-error" class="form-error hidden"></p>
+            </div>
+            <div class="step__actions">
+                <button id="name-back" type="button" class="btn btn--secondary">Voltar</button>
+                <button id="name-continue" type="button" class="btn btn--primary">Continuar</button>
+            </div>
+        </section>
+
+        <!-- Etapa 5: Horário de retirada -->
+        <section id="step-pickup-time" class="step hidden">
+            <h2 class="step__title">Horário de retirada</h2>
+            <div class="form-field">
+                <input id="input-pickup-time" type="time" class="form-input" min="11:00" max="21:30">
+                <p id="pickup-time-error" class="form-error hidden"></p>
+            </div>
+            <div class="step__actions">
+                <button id="pickup-time-back" type="button" class="btn btn--secondary">Voltar</button>
+                <button id="pickup-time-continue" type="button" class="btn btn--primary">Continuar</button>
+            </div>
+        </section>
+
+        <!-- Etapa 6: Tipo de pedido -->
+        <section id="step-order-type" class="step hidden">
+            <h2 class="step__title">Como prefere seu pedido?</h2>
+            <div class="order-type-options" role="radiogroup" aria-label="Tipo de pedido">
+                <label class="order-type-option">
+                    <input type="radio" name="order-type" value="DINE_IN">
+                    <span class="order-type-option__icon" aria-hidden="true">🍽️</span>
+                    <span>Consumir no local</span>
+                </label>
+                <label class="order-type-option">
+                    <input type="radio" name="order-type" value="TAKEAWAY">
+                    <span class="order-type-option__icon" aria-hidden="true">🥡</span>
+                    <span>Para viagem</span>
+                </label>
+            </div>
+            <p id="order-type-error" class="form-error hidden"></p>
+            <div class="step__actions">
+                <button id="order-type-back" type="button" class="btn btn--secondary">Voltar</button>
+                <button id="order-type-continue" type="button" class="btn btn--primary">Continuar</button>
+            </div>
+        </section>
+
+        <!-- Etapa 7: Cutelaria descartável (só para viagem) -->
+        <section id="step-cutlery" class="step hidden">
+            <h2 class="step__title">Precisa de talher descartável?</h2>
+            <div class="order-type-options" role="radiogroup" aria-label="Talher descartável">
+                <label class="order-type-option">
+                    <input type="radio" name="disposable-cutlery" value="yes">
+                    <span class="order-type-option__icon" aria-hidden="true">🥄</span>
+                    <span>Sim</span>
+                </label>
+                <label class="order-type-option">
+                    <input type="radio" name="disposable-cutlery" value="no">
+                    <span class="order-type-option__icon" aria-hidden="true">🚫</span>
+                    <span>Não</span>
+                </label>
+            </div>
+            <p id="cutlery-error" class="form-error hidden"></p>
+            <div class="step__actions">
+                <button id="cutlery-back" type="button" class="btn btn--secondary">Voltar</button>
+                <button id="cutlery-continue" type="button" class="btn btn--primary">Continuar</button>
+            </div>
+        </section>
+
+        <!-- Etapa 8: Forma de pagamento -->
+        <section id="step-payment" class="step hidden">
+            <h2 class="step__title">Forma de pagamento</h2>
+            <div class="payment-options" role="radiogroup" aria-label="Forma de pagamento">
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="CASH">
+                    <span>Dinheiro</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="PIX">
+                    <span>PIX</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="CREDIT_CARD">
+                    <span>Cartão de crédito</span>
+                </label>
+                <label class="payment-option">
+                    <input type="radio" name="payment-method" value="DEBIT_CARD">
+                    <span>Cartão de débito</span>
+                </label>
+            </div>
+            <p id="payment-error" class="form-error hidden"></p>
+            <div class="step__actions">
+                <button id="payment-back" type="button" class="btn btn--secondary">Voltar</button>
+                <button id="payment-continue" type="button" class="btn btn--primary">Continuar</button>
+            </div>
+        </section>
+
+        <!-- Etapa 9: Observações e envio -->
+        <section id="step-notes" class="step hidden">
+            <h2 class="step__title">Observações (opcional)</h2>
+            <div class="form-field">
+                    <textarea id="input-observation" class="form-input form-textarea"
+                              placeholder="Ex.: sem cebola, arroz extra, molho à parte, sem pimenta, bem passado..." maxlength="140" rows="3"></textarea>
+                <p id="notes-error" class="form-error hidden"></p>
+            </div>
+            <div class="step__actions">
+                <button id="notes-back" type="button" class="btn btn--secondary">Voltar</button>
+                <button id="notes-submit" type="button" class="btn btn--primary">Fazer Pedido</button>
+            </div>
+        </section>
+
+        <!-- Etapa 10: Confirmação -->
+        <section id="step-confirmation" class="step hidden"></section>
+    </main>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

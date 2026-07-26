@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pedacinho de Maria — Cozinha</title>
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/dashboard.css">
+</head>
+<body>
+<!-- Gate de início de turno — passo inicial do turno da cozinha. Não
+     desbloqueia mais áudio (alerta sonoro removido); pedidos atrasados
+     são movidos automaticamente para "Pronto" após 35min em "Preparando"
+     (ver checkAutoReadyTransitions em columnManager.js), sem alerta. -->
+<div id="shift-gate" class="shift-gate">
+    <div class="shift-gate__content">
+        <img src="assets/icons/flower.svg" alt="" class="shift-gate__flower" aria-hidden="true">
+        <h1>Pedacinho de Maria</h1>
+        <p>Painel da cozinha</p>
+        <button id="start-shift-button" type="button" class="btn btn--primary btn--large">
+            Iniciar Turno
+        </button>
+    </div>
+</div>
+
+<div id="board" class="board hidden">
+    <header class="board__header">
+        <img src="assets/icons/flower.svg" alt="" class="board__flower" aria-hidden="true">
+        <h1 class="board__title">Pedacinho de Maria — Cozinha</h1>
+    </header>
+
+    <p id="board-error" class="board-error hidden"></p>
+
+    <div class="columns">
+        <section id="column-waiting" class="column">
+            <h2 class="column__title">Aguardando</h2>
+            <div class="column__list"></div>
+        </section>
+        <section id="column-preparing" class="column">
+            <h2 class="column__title">Preparando</h2>
+            <div class="column__list"></div>
+        </section>
+        <section id="column-ready" class="column">
+            <h2 class="column__title">Pronto</h2>
+            <div class="column__list"></div>
+        </section>
+        <section id="column-delivered" class="column">
+            <h2 class="column__title">Entregue</h2>
+            <div class="column__list"></div>
+        </section>
+    </div>
+</div>
+
+<script type="module" src="js/dashboard.js"></script>
+</body>
+</html>
