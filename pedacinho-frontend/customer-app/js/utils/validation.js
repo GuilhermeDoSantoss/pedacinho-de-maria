@@ -12,7 +12,7 @@
  * lugares — documentado aqui para não ser esquecido.
  */
 const OPENING_TIME_MINUTES = 11 * 60;
-const LAST_PICKUP_TIME_MINUTES = 21 * 60 + 30;
+const LAST_PICKUP_TIME_MINUTES = 15 * 60 + 30;
 
 export function validateCustomerName(name) {
     const trimmed = name.trim();
@@ -37,7 +37,7 @@ export function validatePickupTime(timeString) {
         return 'Horário de retirada não pode estar no passado';
     }
     if (totalMinutes < OPENING_TIME_MINUTES || totalMinutes > LAST_PICKUP_TIME_MINUTES) {
-        return 'Horário de retirada deve ser entre 11:00 e 21:30';
+        return 'Horário de retirada deve ser entre 11:00 e 15:30';
     }
     return null;
 }

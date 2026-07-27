@@ -14,16 +14,9 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import java.util.List;
 
 /**
- * Segurança HTTP da aplicação. Decisão de produto (consolidação Fases 1+2):
- * SEM autenticação nesta versão — nem cliente nem cozinha fazem login. O
+ * Segurança HTTP da aplicação. Decisão de produto:
+ * SEM autenticação — nem cliente nem cozinha fazem login. O
  * Kitchen Dashboard abre direto no board e conecta ao WebSocket sem token.
- *
- * Isso é uma reversão deliberada do JWT que existiu brevemente durante a
- * Fase 2 — removido por completo (não só desativado) porque código de
- * autenticação sem nenhum endpoint que o exija é exatamente o tipo de peso
- * morto que este projeto evita desde a Fase 1. Se autenticação voltar a ser
- * necessária no futuro (ex.: Admin Panel com ações destrutivas), a
- * implementação anterior está no histórico do projeto para ser retomada.
  *
  * O que esta classe garante:
  *  1. Todas as rotas de negócio (menu, orders, kitchen) são públicas.
@@ -47,11 +40,30 @@ public class SecurityConfig {
                 .headers(headers -> headers
                         .frameOptions(HeadersConfigurer.FrameOptionsConfig::deny)
                         .contentTypeOptions(contentTypeOptions -> {})
+                        // Reduz o quanto a URL de origem vaza em navegação cross-site —
+                        // não muda nenhum comportamento funcional, só hardening.
+                        .referrerPolicy(referrer -> referrer
+                                .policy(org.springframework.security.web.header.writers.ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+                        // Desliga explicitamente APIs de navegador que este app nunca usa
+                        // (câmera, microfone, geolocalização) — reduz superfície de ataque
+                        // caso algum script de terceiro (analytics, etc.) seja adicionado
+                        // no futuro e tente abusar dessas permissões sem o usuário perceber.
+                        .permissionsPolicy(permissions -> permissions
+                                .policy("camera=(), microphone=(), geolocation=()"))
+                        // Explícito, não implícito: o Spring Security já inclui isso por
+                        // padrão quando .headers(...) é usado sem desabilitar, mas deixar
+                        // implícito significa que qualquer alteração futura nesta config
+                        // poderia silenciosamente perder essa proteção sem ninguém notar.
+                        // Sem no-store, o navegador pode servir uma resposta antiga do
+                        // cache (304 + corpo do cache) para o cardápio/pedidos depois de
+                        // uma mudança no MongoDB — dado sempre mutável não pode ser
+                        // cacheado pelo navegador em nenhuma hipótese.
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/v1/menu/**").permitAll()
                         .requestMatchers("/api/v1/side-dishes/**").permitAll()
                         .requestMatchers("/api/v1/extras/**").permitAll()
+                        .requestMatchers("/api/v1/drinks/**").permitAll()
                         .requestMatchers("/api/v1/orders/**").permitAll()
                         .requestMatchers("/api/v1/kitchen/**").permitAll()
                         .requestMatchers("/ws/**", "/ws-sockjs/**").permitAll()
@@ -68,7 +80,13 @@ public class SecurityConfig {
         configuration.setAllowedOrigins(allowedOrigins);
         configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
-        configuration.setAllowCredentials(true);
+        // Removido allowCredentials(true): a aplicação é 100% stateless (sem
+        // cookie de sessão, sem login) — nenhum request precisa carregar
+        // credenciais. Deixar isso ligado sem uso real só adiciona restrições
+        // extras de CORS (navegadores são mais estritos com preflight quando
+        // credentials=true) sem nenhum benefício, e é uma causa documentada
+        // de comportamento inconsistente entre requisições same-origin
+        // (Swagger, curl) e cross-origin (fetch do navegador).
 
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
