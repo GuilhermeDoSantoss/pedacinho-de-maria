@@ -52,3 +52,4 @@ function subscribeToOrderStatus(orderCode) {
 }
 
 document.addEventListener('DOMContentLoaded', bootstrap);
+

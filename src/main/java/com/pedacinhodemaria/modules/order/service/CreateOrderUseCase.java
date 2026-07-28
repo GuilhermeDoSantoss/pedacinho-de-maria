@@ -184,7 +184,7 @@ public class CreateOrderUseCase {
         }
         if (pickupTime.isBefore(OPENING_TIME) || pickupTime.isAfter(LAST_PICKUP_TIME)) {
             throw new InvalidPickupTimeException(
-                    "Horário de retirada deve estar entre %s e %s".formatted(OPENING_TIME, LAST_PICKUP_TIME));
+                    "Horário de retirada deve estar entre 11:30 e 15:30".formatted(OPENING_TIME, LAST_PICKUP_TIME));
         }
     }
 
