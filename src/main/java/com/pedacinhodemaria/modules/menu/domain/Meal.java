@@ -66,4 +66,11 @@ public class Meal {
      * controlável pelo Owner.
      */
     private Integer displayOrder;
+
+    /**
+     * Controla se este prato exige a seleção de um acompanhamento no fluxo de
+     * pedido. Quando false, o cliente pode finalizar o pedido sem escolher um
+     * acompanhamento, e o backend não valida nem persiste esse campo.
+     */
+    private boolean requiresSideDish;
 }

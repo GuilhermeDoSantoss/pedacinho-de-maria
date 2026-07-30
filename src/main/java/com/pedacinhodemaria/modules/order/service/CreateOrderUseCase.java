@@ -15,14 +15,12 @@ import com.pedacinhodemaria.modules.order.dto.OrderResponse;
 import com.pedacinhodemaria.modules.order.repository.OrderRepository;
 import com.pedacinhodemaria.modules.order.mapper.OrderMapper;
 import com.pedacinhodemaria.modules.order.websocket.OrderEventPublisher;
-import com.pedacinhodemaria.shared.exception.InvalidPickupTimeException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalTime;
 import java.util.List;
 
 /**
@@ -40,9 +38,6 @@ import java.util.List;
 @Slf4j
 public class CreateOrderUseCase {
 
-    /** Fora desse horário o restaurante não está preparando pedidos. Ver validatePickupTime. */
-    private static final LocalTime OPENING_TIME = LocalTime.of(11, 0);
-    private static final LocalTime LAST_PICKUP_TIME = LocalTime.of(21, 30);
     private static final int MAX_CODE_GENERATION_ATTEMPTS = 5;
 
     private final MenuService menuService;
@@ -52,6 +47,7 @@ public class CreateOrderUseCase {
     private final OrderMapper orderMapper;
     private final OrderEventPublisher eventPublisher;
     private final OrderCodeGenerator codeGenerator;
+    private final PickupTimePolicy pickupTimePolicy;
 
     /**
      * Cria um pedido e notifica a cozinha em tempo real.
@@ -72,10 +68,10 @@ public class CreateOrderUseCase {
      */
     public OrderResponse execute(CreateOrderRequest request) {
         Meal meal = menuService.getActiveMealOrThrow(request.mealId());
-        SideDish sideDish = sideDishService.getActiveSideDishOrThrow(request.sideDishId());
+        SideDish sideDish = resolveSideDish(meal, request.sideDishId());
         List<Extra> extras = resolveExtras(request.extraIds());
 
-        validatePickupTime(request.pickupTime());
+        pickupTimePolicy.validate(request.pickupTime());
 
         BigDecimal totalPrice = calculateTotal(meal, sideDish, extras);
 
@@ -86,9 +82,9 @@ public class CreateOrderUseCase {
                 .mealName(meal.getName())
                 .mealPrice(meal.getPrice())
                 .mealPrepTimeMinutes(meal.getEstimatedPrepTimeMinutes())
-                .sideDishId(sideDish.getId())
-                .sideDishName(sideDish.getName())
-                .sideDishPrice(sideDish.getPrice())
+                .sideDishId(sideDish != null ? sideDish.getId() : null)
+                .sideDishName(sideDish != null ? sideDish.getName() : null)
+                .sideDishPrice(sideDish != null ? sideDish.getPrice() : null)
                 .extras(toExtraSnapshots(extras))
                 .totalPrice(totalPrice)
                 .observation(sanitizeObservation(request.observation()))
@@ -108,6 +104,13 @@ public class CreateOrderUseCase {
         OrderResponse response = orderMapper.toResponse(saved);
         eventPublisher.publishOrderCreated(response);
         return response;
+    }
+
+    private SideDish resolveSideDish(Meal meal, String sideDishId) {
+        if (!meal.isRequiresSideDish()) {
+            return null;
+        }
+        return sideDishService.getActiveSideDishOrThrow(sideDishId);
     }
 
     /** extraIds é opcional no request — null vira lista vazia, nunca erro de validação. */
@@ -139,7 +142,7 @@ public class CreateOrderUseCase {
     private BigDecimal calculateTotal(Meal meal, SideDish sideDish, List<Extra> extras) {
         BigDecimal total = meal.getPrice();
 
-        if (sideDish.getPrice() != null) {
+        if (sideDish != null && sideDish.getPrice() != null) {
             total = total.add(sideDish.getPrice());
         }
         for (Extra extra : extras) {
@@ -166,26 +169,6 @@ public class CreateOrderUseCase {
         }
         throw new IllegalStateException("Não foi possível gerar um orderCode único após "
                 + MAX_CODE_GENERATION_ATTEMPTS + " tentativas");
-    }
-
-    /**
-     * Janela de funcionamento fixa por ora (11h–21h30). Vira configuração via
-     * Admin Panel numa fase futura — não implementado agora porque não há
-     * ainda uma tela de admin que o justifique; hardcoded é a escolha correta
-     * até esse ponto existir (YAGNI).
-     *
-     * Também rejeita horário já passado — sem isso, um cliente que abre o QR
-     * Code às 20h55 e demora pra decidir poderia enviar "20:50" como horário
-     * de retirada, um pedido que já nasce atrasado.
-     */
-    private void validatePickupTime(LocalTime pickupTime) {
-        if (pickupTime.isBefore(LocalTime.now())) {
-            throw new InvalidPickupTimeException("Horário de retirada não pode estar no passado");
-        }
-        if (pickupTime.isBefore(OPENING_TIME) || pickupTime.isAfter(LAST_PICKUP_TIME)) {
-            throw new InvalidPickupTimeException(
-                    "Horário de retirada deve estar entre 11:30 e 15:30".formatted(OPENING_TIME, LAST_PICKUP_TIME));
-        }
     }
 
     /**

@@ -33,9 +33,14 @@ export function renderConfirmation(container, order) {
         createElement('dd', {}, [order.customerName]),
         createElement('dt', {}, ['Prato']),
         createElement('dd', {}, [order.mealName]),
-        createElement('dt', {}, ['Acompanhamento']),
-        createElement('dd', {}, [order.sideDishName]),
     ];
+
+    if (order.sideDishName) {
+        details.push(
+            createElement('dt', {}, ['Acompanhamento']),
+            createElement('dd', {}, [order.sideDishName]),
+        );
+    }
 
     if (order.extras && order.extras.length > 0) {
         const extrasText = order.extras.map((e) => e.extraName).join(', ');

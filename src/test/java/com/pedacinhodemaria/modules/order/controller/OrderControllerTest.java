@@ -58,14 +58,14 @@ class OrderControllerTest {
 
     private OrderResponse sampleResponse() {
         return new OrderResponse("PM-ABCDE", "Maria Silva", "Feijoada", new BigDecimal("28.90"), 30,
-                "Arroz", BigDecimal.ZERO, List.of(), new BigDecimal("28.90"),
+                "Arroz", BigDecimal.ZERO, List.of(), List.of(), new BigDecimal("28.90"),
                 LocalTime.of(19, 30), OrderType.DINE_IN, null, PaymentMethod.PIX, null,
                 OrderStatus.RECEIVED, TimerState.GREEN, java.time.Instant.now());
     }
 
     @Test
     void createOrderReturns201WithBodyOnValidRequest() throws Exception {
-        var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null,
+        var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null,
                 LocalTime.of(19, 30), OrderType.DINE_IN, null, PaymentMethod.PIX, null);
 
         when(createOrderUseCase.execute(any())).thenReturn(sampleResponse());
@@ -83,7 +83,7 @@ class OrderControllerTest {
         // Exercita o @Valid de verdade através do MockMvc — diferente dos
         // testes de CreateOrderUseCase, que chamam o use case diretamente e
         // nunca passam pela camada de Bean Validation do Spring MVC.
-        var invalidRequest = new CreateOrderRequest("", "meal-1", "side-1", null,
+        var invalidRequest = new CreateOrderRequest("", "meal-1", "side-1", null, null,
                 LocalTime.of(19, 30), OrderType.DINE_IN, null, PaymentMethod.PIX, null);
 
         mockMvc.perform(post("/api/v1/orders")

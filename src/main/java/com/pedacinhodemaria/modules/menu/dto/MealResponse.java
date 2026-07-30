@@ -12,6 +12,7 @@ public record MealResponse(
         String imageUrl,
         Integer estimatedPrepTimeMinutes,
         MealType type,
-        Integer displayOrder
+        Integer displayOrder,
+        boolean requiresSideDish
 ) {
 }

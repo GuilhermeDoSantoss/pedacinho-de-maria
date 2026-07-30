@@ -40,14 +40,14 @@ let extrasLoadPromise = null;
 let currentStep = 'menu';
 
 export function initOrderForm() {
-    qs('#confirm-meal-continue').addEventListener('click', () => goToStep('side-dish'));
+    qs('#confirm-meal-continue').addEventListener('click', () => goToStep(nextStepAfterMealSelection()));
     qs('#confirm-meal-back').addEventListener('click', () => goToStep('menu'));
 
     qs('#side-dish-continue').addEventListener('click', handleSideDishStep);
     qs('#side-dish-back').addEventListener('click', () => goToStep('confirm-meal'));
 
     qs('#extras-continue').addEventListener('click', () => goToStep('name'));
-    qs('#extras-back').addEventListener('click', () => goToStep('side-dish'));
+    qs('#extras-back').addEventListener('click', () => goToStep(nextStepBeforeExtrasSelection()));
 
     qs('#name-continue').addEventListener('click', handleNameStep);
     qs('#name-back').addEventListener('click', () => goToStep('extras'));
@@ -71,13 +71,14 @@ export function initOrderForm() {
 /** Chamado pelo menuRenderer quando o cliente toca em um prato. */
 export function selectMeal(meal) {
     draft.meal = meal;
+    draft.sideDish = null;
 
     qs('#confirm-meal-name').textContent = meal.name;
     qs('#confirm-meal-description').textContent = meal.description || '';
     qs('#confirm-meal-price').textContent = formatCurrency(meal.price);
     qs('#confirm-meal-prep-time').textContent = `Tempo estimado: ~${meal.estimatedPrepTimeMinutes} min`;
 
-    goToStep('side-dish');
+    goToStep(nextStepAfterMealSelection());
 }
 
 /**
@@ -128,6 +129,12 @@ function renderSideDishList(container) {
 }
 
 function handleSideDishStep() {
+    if (draft.meal?.requiresSideDish === false) {
+        showFieldError('#side-dish-error', null);
+        goToStep('extras');
+        return;
+    }
+
     if (!draft.sideDish) {
         showFieldError('#side-dish-error', 'Escolha um acompanhamento');
         return;
@@ -252,7 +259,7 @@ async function handleSubmit() {
         const order = await createOrder({
             customerName: draft.customerName,
             mealId: draft.meal.id,
-            sideDishId: draft.sideDish.id,
+            sideDishId: draft.meal?.requiresSideDish ? draft.sideDish?.id ?? null : null,
             extraIds: Array.from(draft.extras.keys()),
             pickupTime: draft.pickupTime,
             orderType: draft.orderType,
@@ -278,6 +285,14 @@ function handleSubmitError(err) {
         return;
     }
     showFieldError('#notes-error', 'Não foi possível enviar o pedido. Verifique sua conexão e tente novamente.');
+}
+
+function nextStepAfterMealSelection() {
+    return draft.meal?.requiresSideDish ? 'side-dish' : 'extras';
+}
+
+function nextStepBeforeExtrasSelection() {
+    return draft.meal?.requiresSideDish ? 'side-dish' : 'confirm-meal';
 }
 
 function showFieldError(selector, message) {

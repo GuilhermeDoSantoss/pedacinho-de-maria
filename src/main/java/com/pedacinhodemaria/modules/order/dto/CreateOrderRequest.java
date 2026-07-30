@@ -35,7 +35,6 @@ public record CreateOrderRequest(
         @NotBlank(message = "Selecione um prato")
         String mealId,
 
-        @NotBlank(message = "Selecione um acompanhamento")
         String sideDishId,
 
         /**

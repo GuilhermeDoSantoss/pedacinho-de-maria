@@ -40,7 +40,9 @@ export function createOrderTicket(order, onAdvance) {
 
         createElement('h3', { className: 'ticket__customer' }, [order.customerName]),
         createElement('p', { className: 'ticket__meal' }, [order.mealName]),
-        createElement('p', { className: 'ticket__side-dish' }, [`+ ${order.sideDishName}`]),
+        order.sideDishName
+            ? createElement('p', { className: 'ticket__side-dish' }, [`+ ${order.sideDishName}`])
+            : createElement('span', {}, []),
 
         order.extras && order.extras.length > 0
             ? createElement('p', { className: 'ticket__extras' },
