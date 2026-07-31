@@ -73,7 +73,7 @@ class OrderControllerTest {
         mockMvc.perform(post("/api/v1/orders")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isCreated())
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.orderCode").value("PM-ABCDE"))
                 .andExpect(jsonPath("$.mealName").value("Feijoada"));
     }
