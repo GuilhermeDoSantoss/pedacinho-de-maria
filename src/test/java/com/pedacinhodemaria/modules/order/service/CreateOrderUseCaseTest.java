@@ -14,7 +14,9 @@ import com.pedacinhodemaria.modules.order.dto.CreateOrderRequest;
 import com.pedacinhodemaria.modules.order.dto.OrderResponse;
 import com.pedacinhodemaria.modules.order.repository.OrderRepository;
 import com.pedacinhodemaria.modules.order.mapper.OrderMapper;
+import com.pedacinhodemaria.modules.order.service.PhoneNumberNormalizer;
 import com.pedacinhodemaria.modules.order.websocket.OrderEventPublisher;
+import com.pedacinhodemaria.shared.exception.InvalidPhoneNumberException;
 import com.pedacinhodemaria.shared.exception.InvalidPickupTimeException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -46,6 +48,7 @@ class CreateOrderUseCaseTest {
     @Mock private OrderMapper orderMapper;
     @Mock private OrderEventPublisher eventPublisher;
     @Mock private OrderCodeGenerator codeGenerator;
+    @Mock private PhoneNumberNormalizer phoneNumberNormalizer;
 
     private PickupTimePolicy pickupTimePolicy;
 
@@ -76,7 +79,7 @@ class CreateOrderUseCaseTest {
         };
         pickupTimePolicy = new PickupTimePolicy(fixedClock);
         useCase = new CreateOrderUseCase(menuService, sideDishService, extraService, orderRepository,
-                orderMapper, eventPublisher, codeGenerator, pickupTimePolicy);
+                orderMapper, eventPublisher, codeGenerator, pickupTimePolicy, phoneNumberNormalizer);
 
         activeMeal = Meal.builder()
                 .id("meal-1")
@@ -111,16 +114,16 @@ class CreateOrderUseCaseTest {
         when(menuService.getActiveMealOrThrow("meal-1")).thenReturn(activeMeal);
         when(sideDishService.getActiveSideDishOrThrow("side-1")).thenReturn(activeSideDish);
         when(codeGenerator.generate()).thenReturn("PM-ABCDE");
-        when(orderRepository.findByOrderCode("PM-ABCDE")).thenReturn(Optional.empty());
-        when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
-        when(orderMapper.toResponse(any(Order.class))).thenReturn(mock(OrderResponse.class));
+        lenient().when(orderRepository.findByOrderCode("PM-ABCDE")).thenReturn(Optional.empty());
+        lenient().when(orderRepository.save(any(Order.class))).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(orderMapper.toResponse(any(Order.class))).thenReturn(mock(OrderResponse.class));
     }
 
     @Test
     void createsOrderWithSideDishAndNoExtras() {
         stubHappyPathDependencies();
         var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, aValidPickupTime(),
-                OrderType.DINE_IN, null, PaymentMethod.PIX, null);
+                OrderType.DINE_IN, null, PaymentMethod.PIX, null, null);
 
         OrderResponse result = useCase.execute(request);
 
@@ -142,7 +145,7 @@ class CreateOrderUseCaseTest {
         when(extraService.getActiveExtraOrThrow("extra-1")).thenReturn(friedEgg);
 
         var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", List.of("extra-1"), null,
-                aValidPickupTime(), OrderType.DINE_IN, null, PaymentMethod.PIX, null);
+                aValidPickupTime(), OrderType.DINE_IN, null, PaymentMethod.PIX, null, null);
 
         useCase.execute(request);
 
@@ -164,7 +167,7 @@ class CreateOrderUseCaseTest {
         when(orderMapper.toResponse(any(Order.class))).thenReturn(mock(OrderResponse.class));
 
         var request = new CreateOrderRequest("Maria Silva", "meal-1", null, null, null, aValidPickupTime(),
-                OrderType.DINE_IN, null, PaymentMethod.PIX, null);
+                OrderType.DINE_IN, null, PaymentMethod.PIX, null, null);
 
         useCase.execute(request);
 
@@ -182,7 +185,7 @@ class CreateOrderUseCaseTest {
         when(sideDishService.getActiveSideDishOrThrow("side-1")).thenReturn(activeSideDish);
 
         var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, LocalTime.of(10, 15),
-                OrderType.DINE_IN, null, PaymentMethod.CASH, null);
+                OrderType.DINE_IN, null, PaymentMethod.CASH, null, null);
 
         assertThatThrownBy(() -> useCase.execute(request))
                 .isInstanceOf(InvalidPickupTimeException.class)
@@ -197,7 +200,7 @@ class CreateOrderUseCaseTest {
         when(sideDishService.getActiveSideDishOrThrow("side-1")).thenReturn(activeSideDish);
 
         var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, LocalTime.of(11, 15),
-                OrderType.DINE_IN, null, PaymentMethod.CASH, null);
+                OrderType.DINE_IN, null, PaymentMethod.CASH, null, null);
 
         assertThatThrownBy(() -> useCase.execute(request))
                 .isInstanceOf(InvalidPickupTimeException.class)
@@ -212,7 +215,7 @@ class CreateOrderUseCaseTest {
         when(sideDishService.getActiveSideDishOrThrow("side-1")).thenReturn(activeSideDish);
 
         var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, LocalTime.of(15, 45),
-                OrderType.DINE_IN, null, PaymentMethod.CASH, null);
+                OrderType.DINE_IN, null, PaymentMethod.CASH, null, null);
 
         assertThatThrownBy(() -> useCase.execute(request))
                 .isInstanceOf(InvalidPickupTimeException.class)
@@ -226,7 +229,7 @@ class CreateOrderUseCaseTest {
         stubHappyPathDependencies();
 
         var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, LocalTime.of(13, 0),
-                OrderType.DINE_IN, null, PaymentMethod.PIX, null);
+                OrderType.DINE_IN, null, PaymentMethod.PIX, null, null);
 
         useCase.execute(request);
 
@@ -237,7 +240,7 @@ class CreateOrderUseCaseTest {
     void forcesCutleryToNullWhenOrderTypeIsDineInEvenIfRequested() {
         stubHappyPathDependencies();
         var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, aValidPickupTime(),
-                OrderType.DINE_IN, true, PaymentMethod.PIX, null);
+                OrderType.DINE_IN, true, PaymentMethod.PIX, null, null);
 
         useCase.execute(request);
 
@@ -248,11 +251,48 @@ class CreateOrderUseCaseTest {
     void preservesCutleryChoiceWhenOrderTypeIsTakeaway() {
         stubHappyPathDependencies();
         var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, aValidPickupTime(),
-                OrderType.TAKEAWAY, true, PaymentMethod.PIX, null);
+                OrderType.TAKEAWAY, true, PaymentMethod.PIX, null, "21999999999");
 
         useCase.execute(request);
 
         verify(orderRepository).save(argThat(order -> Boolean.TRUE.equals(order.getNeedsDisposableCutlery())));
+    }
+
+    @Test
+    void rejectsTakeawayOrderWithoutPhoneNumber() {
+        stubHappyPathDependencies();
+        when(phoneNumberNormalizer.normalizeAndValidate(null, true)).thenThrow(new IllegalArgumentException("O telefone é obrigatório para pedidos para viagem."));
+        var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, aValidPickupTime(),
+                OrderType.TAKEAWAY, null, PaymentMethod.PIX, null, null);
+
+        assertThatThrownBy(() -> useCase.execute(request))
+                .isInstanceOf(InvalidPhoneNumberException.class)
+                .hasMessage("O telefone é obrigatório para pedidos para viagem.");
+
+        verifyNoInteractions(eventPublisher);
+    }
+
+    @Test
+    void normalizesPhoneNumberBeforePersistingTakeawayOrder() {
+        stubHappyPathDependencies();
+        when(phoneNumberNormalizer.normalizeAndValidate("(21) 99999-9999", true)).thenReturn("21999999999");
+        var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, aValidPickupTime(),
+                OrderType.TAKEAWAY, null, PaymentMethod.PIX, null, "(21) 99999-9999");
+
+        useCase.execute(request);
+
+        verify(orderRepository).save(argThat(order -> "21999999999".equals(order.getPhoneNumber())));
+    }
+
+    @Test
+    void allowsDineInOrderWithoutPhoneNumber() {
+        stubHappyPathDependencies();
+        var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, aValidPickupTime(),
+                OrderType.DINE_IN, null, PaymentMethod.PIX, null, null);
+
+        useCase.execute(request);
+
+        verify(orderRepository).save(argThat(order -> order.getPhoneNumber() == null));
     }
 
     @Test
@@ -266,7 +306,7 @@ class CreateOrderUseCaseTest {
         when(orderMapper.toResponse(any(Order.class))).thenReturn(mock(OrderResponse.class));
 
         var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, aValidPickupTime(),
-                OrderType.DINE_IN, null, PaymentMethod.PIX, null);
+                OrderType.DINE_IN, null, PaymentMethod.PIX, null, null);
 
         useCase.execute(request);
 

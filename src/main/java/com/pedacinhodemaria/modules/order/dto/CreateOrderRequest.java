@@ -2,6 +2,7 @@ package com.pedacinhodemaria.modules.order.dto;
 
 import com.pedacinhodemaria.modules.order.domain.OrderType;
 import com.pedacinhodemaria.modules.order.domain.PaymentMethod;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -59,6 +60,9 @@ public record CreateOrderRequest(
         PaymentMethod paymentMethod,
 
         @Size(max = 140, message = "Observação deve ter no máximo 140 caracteres")
-        String observation
+        String observation,
+
+        @Schema(description = "Telefone do cliente para pedidos para viagem; aceito no formato (21) 99999-9999 ou 21999999999", example = "21999999999")
+        String phoneNumber
 ) {
 }

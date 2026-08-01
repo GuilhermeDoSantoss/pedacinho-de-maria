@@ -32,6 +32,7 @@ public record OrderResponse(
         Boolean needsDisposableCutlery,
         PaymentMethod paymentMethod,
         String observation,
+        String phoneNumber,
         OrderStatus status,
         TimerState timerState,
         Instant createdAt

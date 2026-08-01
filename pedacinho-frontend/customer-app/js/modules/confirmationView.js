@@ -73,7 +73,7 @@ export function renderConfirmation(container, order) {
     container.append(
         createElement('div', { className: 'confirmation' }, [
             createElement('div', { className: 'confirmation__icon' }, ['✓']),
-            createElement('h2', { className: 'confirmation__title' }, ['Pedido confirmado!']),
+            createElement('h2', { className: 'confirmation__title' }, ['Seu pedido foi confirmado!']),
             createElement('p', { className: 'confirmation__order-code' }, [order.orderCode]),
 
             createElement('dl', { className: 'confirmation__details' }, details),

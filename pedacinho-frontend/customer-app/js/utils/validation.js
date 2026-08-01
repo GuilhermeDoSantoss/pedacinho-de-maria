@@ -22,6 +22,24 @@ export function validateCustomerName(name) {
     return null;
 }
 
+export function validatePhoneNumber(phoneNumber, required = false) {
+    const digitsOnly = (phoneNumber || '').replace(/\D/g, '');
+
+    if (!required) {
+        return null;
+    }
+
+    if (!digitsOnly) {
+        return 'Informe um telefone para pedidos para viagem';
+    }
+
+    if (digitsOnly.length < 10 || digitsOnly.length > 11) {
+        return 'Telefone inválido. Informe um número entre 10 e 11 dígitos.';
+    }
+
+    return null;
+}
+
 export function validatePickupTime(timeString) {
     if (!timeString) {
         return 'Escolha um horário de retirada';

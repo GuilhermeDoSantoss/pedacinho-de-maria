@@ -1,5 +1,5 @@
 import { qs, qsa, show, hide, formatCurrency } from '../utils/domHelpers.js';
-import { validateCustomerName, validatePickupTime, validateObservation } from '../utils/validation.js';
+import { validateCustomerName, validatePickupTime, validateObservation, validatePhoneNumber } from '../utils/validation.js';
 import { createOrder, ApiRequestError } from '../api/orderApi.js';
 import { fetchSideDishes, fetchExtras } from '../api/menuApi.js';
 import { renderSideDishes, renderExtras } from './menuRenderer.js';
@@ -18,6 +18,7 @@ const draft = {
     customerName: '',
     pickupTime: '',
     orderType: '',
+    phoneNumber: '',
     needsDisposableCutlery: null,
     paymentMethod: '',
     observation: '',
@@ -58,14 +59,19 @@ export function initOrderForm() {
     qs('#order-type-continue').addEventListener('click', handleOrderTypeStep);
     qs('#order-type-back').addEventListener('click', () => goToStep('pickup-time'));
 
+    qs('#phone-continue').addEventListener('click', handlePhoneStep);
+    qs('#phone-back').addEventListener('click', handlePhoneBack);
+
     qs('#cutlery-continue').addEventListener('click', handleCutleryStep);
-    qs('#cutlery-back').addEventListener('click', () => goToStep('order-type'));
+    qs('#cutlery-back').addEventListener('click', () => goToStep(draft.orderType === 'TAKEAWAY' ? 'phone' : 'order-type'));
 
     qs('#payment-continue').addEventListener('click', handlePaymentStep);
     qs('#payment-back').addEventListener('click', handlePaymentBack);
 
     qs('#notes-submit').addEventListener('click', handleSubmit);
     qs('#notes-back').addEventListener('click', () => goToStep('payment'));
+
+    qs('#input-phone-number').addEventListener('input', applyPhoneMask);
 }
 
 /** Chamado pelo menuRenderer quando o cliente toca em um prato. */
@@ -211,11 +217,47 @@ function handleOrderTypeStep() {
     draft.orderType = selected.value;
 
     if (draft.orderType === 'TAKEAWAY') {
-        goToStep('cutlery');
-    } else {
-        draft.needsDisposableCutlery = null;
-        goToStep('payment');
+        qs('#input-phone-number').value = draft.phoneNumber ? formatPhoneNumber(draft.phoneNumber) : '';
+        goToStep('phone');
+        return;
     }
+
+    draft.phoneNumber = '';
+    draft.needsDisposableCutlery = null;
+    goToStep('payment');
+}
+
+function handlePhoneStep() {
+    const input = qs('#input-phone-number');
+    const error = validatePhoneNumber(input.value, draft.orderType === 'TAKEAWAY');
+    if (!showFieldError('#phone-error', error)) return;
+
+    draft.phoneNumber = normalizePhoneNumber(input.value);
+    goToStep('cutlery');
+}
+
+function handlePhoneBack() {
+    goToStep('order-type');
+}
+
+function applyPhoneMask(event) {
+    const input = event.currentTarget;
+    const digitsOnly = (input.value || '').replace(/\D/g, '').slice(0, 11);
+    input.value = formatPhoneNumber(digitsOnly);
+}
+
+function normalizePhoneNumber(value) {
+    const digitsOnly = (value || '').replace(/\D/g, '');
+    return digitsOnly || null;
+}
+
+function formatPhoneNumber(value) {
+    const digitsOnly = (value || '').toString().replace(/\D/g, '').slice(0, 11);
+
+    if (digitsOnly.length <= 2) return `(${digitsOnly}`;
+    if (digitsOnly.length <= 6) return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2)}`;
+    if (digitsOnly.length <= 10) return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 6)}-${digitsOnly.slice(6)}`;
+    return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 7)}-${digitsOnly.slice(7, 11)}`;
 }
 
 function handleCutleryStep() {
@@ -263,6 +305,7 @@ async function handleSubmit() {
             extraIds: Array.from(draft.extras.keys()),
             pickupTime: draft.pickupTime,
             orderType: draft.orderType,
+            phoneNumber: draft.orderType === 'TAKEAWAY' ? draft.phoneNumber : null,
             needsDisposableCutlery: draft.needsDisposableCutlery,
             paymentMethod: draft.paymentMethod,
             observation: draft.observation || null,

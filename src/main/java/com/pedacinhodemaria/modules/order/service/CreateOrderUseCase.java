@@ -15,6 +15,7 @@ import com.pedacinhodemaria.modules.order.dto.OrderResponse;
 import com.pedacinhodemaria.modules.order.repository.OrderRepository;
 import com.pedacinhodemaria.modules.order.mapper.OrderMapper;
 import com.pedacinhodemaria.modules.order.websocket.OrderEventPublisher;
+import com.pedacinhodemaria.shared.exception.InvalidPhoneNumberException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -48,6 +49,7 @@ public class CreateOrderUseCase {
     private final OrderEventPublisher eventPublisher;
     private final OrderCodeGenerator codeGenerator;
     private final PickupTimePolicy pickupTimePolicy;
+    private final PhoneNumberNormalizer phoneNumberNormalizer;
 
     /**
      * Cria um pedido e notifica a cozinha em tempo real.
@@ -88,6 +90,7 @@ public class CreateOrderUseCase {
                 .extras(toExtraSnapshots(extras))
                 .totalPrice(totalPrice)
                 .observation(sanitizeObservation(request.observation()))
+                .phoneNumber(resolvePhoneNumber(request.orderType(), request.phoneNumber()))
                 .orderType(request.orderType())
                 .needsDisposableCutlery(normalizeCutlery(request.orderType(), request.needsDisposableCutlery()))
                 .pickupTime(request.pickupTime())
@@ -184,6 +187,15 @@ public class CreateOrderUseCase {
             return null;
         }
         return requested != null && requested;
+    }
+
+    private String resolvePhoneNumber(OrderType orderType, String phoneNumber) {
+        boolean required = orderType == OrderType.TAKEAWAY;
+        try {
+            return phoneNumberNormalizer.normalizeAndValidate(phoneNumber, required);
+        } catch (IllegalArgumentException ex) {
+            throw new InvalidPhoneNumberException(ex.getMessage());
+        }
     }
 
     /** Corta espaços e limita tamanho — a validação de 140 chars já ocorreu no DTO, isso é defesa em profundidade. */

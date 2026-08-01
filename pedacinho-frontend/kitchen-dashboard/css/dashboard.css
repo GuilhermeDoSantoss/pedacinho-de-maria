@@ -232,6 +232,21 @@ body {
     background: var(--color-preparing);
 }
 
+.ticket__contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    text-decoration: none;
+    margin-bottom: var(--space-xs);
+}
+
+.ticket__contact:hover {
+    text-decoration: underline;
+}
+
 .ticket__cutlery,
 .ticket__observation {
     font-size: 0.9rem;

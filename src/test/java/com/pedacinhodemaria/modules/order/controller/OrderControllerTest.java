@@ -11,6 +11,7 @@ import com.pedacinhodemaria.modules.order.dto.OrderResponse;
 import com.pedacinhodemaria.modules.order.service.CreateOrderUseCase;
 import com.pedacinhodemaria.modules.order.service.OrderQueryService;
 import com.pedacinhodemaria.shared.exception.GlobalExceptionHandler;
+import com.pedacinhodemaria.shared.exception.InvalidPhoneNumberException;
 import com.pedacinhodemaria.shared.exception.OrderNotFoundException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,21 +60,21 @@ class OrderControllerTest {
     private OrderResponse sampleResponse() {
         return new OrderResponse("PM-ABCDE", "Maria Silva", "Feijoada", new BigDecimal("28.90"), 30,
                 "Arroz", BigDecimal.ZERO, List.of(), List.of(), new BigDecimal("28.90"),
-                LocalTime.of(19, 30), OrderType.DINE_IN, null, PaymentMethod.PIX, null,
+                LocalTime.of(19, 30), OrderType.DINE_IN, null, PaymentMethod.PIX, null, null,
                 OrderStatus.RECEIVED, TimerState.GREEN, java.time.Instant.now());
     }
 
     @Test
     void createOrderReturns201WithBodyOnValidRequest() throws Exception {
         var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null,
-                LocalTime.of(19, 30), OrderType.DINE_IN, null, PaymentMethod.PIX, null);
+                LocalTime.of(19, 30), OrderType.DINE_IN, null, PaymentMethod.PIX, null, null);
 
         when(createOrderUseCase.execute(any())).thenReturn(sampleResponse());
 
         mockMvc.perform(post("/api/v1/orders")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(request)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.orderCode").value("PM-ABCDE"))
                 .andExpect(jsonPath("$.mealName").value("Feijoada"));
     }
@@ -84,12 +85,27 @@ class OrderControllerTest {
         // testes de CreateOrderUseCase, que chamam o use case diretamente e
         // nunca passam pela camada de Bean Validation do Spring MVC.
         var invalidRequest = new CreateOrderRequest("", "meal-1", "side-1", null, null,
-                LocalTime.of(19, 30), OrderType.DINE_IN, null, PaymentMethod.PIX, null);
+                LocalTime.of(19, 30), OrderType.DINE_IN, null, PaymentMethod.PIX, null, null);
 
         mockMvc.perform(post("/api/v1/orders")
                         .contentType("application/json")
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void createOrderReturns400WhenTakeawayOrderIsMissingPhoneNumber() throws Exception {
+        var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null,
+                LocalTime.of(19, 30), OrderType.TAKEAWAY, null, PaymentMethod.PIX, null, null);
+
+        when(createOrderUseCase.execute(any())).thenThrow(new InvalidPhoneNumberException(
+                "O telefone é obrigatório para pedidos para viagem."));
+
+        mockMvc.perform(post("/api/v1/orders")
+                        .contentType("application/json")
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("O telefone é obrigatório para pedidos para viagem."));
     }
 
     @Test

@@ -104,6 +104,15 @@ public class Order {
     private OrderStatus status;
 
     /**
+     * Telefone do cliente, usado principalmente para pedidos TAKEAWAY quando a
+     * cozinha precisa entrar em contato caso a comida esteja pronta antes da
+     * chegada do cliente. Persistido em texto simples (apenas dígitos) para
+     * simplificar integração futura com WhatsApp/contato.
+     */
+    @Field("phone_number")
+    private String phoneNumber;
+
+    /**
      * Base de cálculo do timer de preparo (ver TimerCalculator) e também o
      * campo indexado pelo TTL index que expira pedidos antigos automaticamente.
      */

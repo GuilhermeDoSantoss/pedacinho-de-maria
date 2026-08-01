@@ -29,6 +29,7 @@ public interface OrderMapper {
 
     @Mapping(target = "timerState",
             expression = "java(TimerCalculator.calculate(order.getCreatedAt(), order.getMealPrepTimeMinutes()))")
+    @Mapping(target = "phoneNumber", source = "phoneNumber")
     OrderResponse toResponse(Order order);
 
     /**

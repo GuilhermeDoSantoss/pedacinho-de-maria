@@ -56,6 +56,15 @@ export function createOrderTicket(order, onAdvance) {
             createElement('span', { className: 'ticket__badge' }, [PAYMENT_LABELS[order.paymentMethod]]),
         ]),
 
+        order.orderType === 'TAKEAWAY' && order.phoneNumber
+            ? createElement('a', {
+                className: 'ticket__contact',
+                href: `https://wa.me/${order.phoneNumber}`,
+                target: '_blank',
+                rel: 'noopener noreferrer',
+            }, [`WhatsApp · ${formatPhoneDisplay(order.phoneNumber)}`])
+            : createElement('span', {}, []),
+
         order.orderType === 'TAKEAWAY'
             ? createElement('p', { className: 'ticket__cutlery' },
                 [`Talher descartável: ${order.needsDisposableCutlery ? 'Sim' : 'Não'}`])
@@ -94,4 +103,18 @@ function timerLabel(timerState) {
     if (timerState === 'RED') return 'Atrasado';
     if (timerState === 'YELLOW') return 'Atenção';
     return 'No prazo';
+}
+
+function formatPhoneDisplay(phone) {
+    const digitsOnly = (phone || '').toString().replace(/\D/g, '');
+
+    if (digitsOnly.length === 11) {
+        return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 7)}-${digitsOnly.slice(7)}`;
+    }
+
+    if (digitsOnly.length === 10) {
+        return `(${digitsOnly.slice(0, 2)}) ${digitsOnly.slice(2, 6)}-${digitsOnly.slice(6)}`;
+    }
+
+    return phone;
 }
