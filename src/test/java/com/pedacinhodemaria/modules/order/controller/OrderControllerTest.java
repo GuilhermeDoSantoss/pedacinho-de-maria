@@ -10,6 +10,7 @@ import com.pedacinhodemaria.modules.order.dto.CreateOrderRequest;
 import com.pedacinhodemaria.modules.order.dto.OrderResponse;
 import com.pedacinhodemaria.modules.order.service.CreateOrderUseCase;
 import com.pedacinhodemaria.modules.order.service.OrderQueryService;
+import com.pedacinhodemaria.modules.order.service.PickupTimePolicy;
 import com.pedacinhodemaria.shared.exception.GlobalExceptionHandler;
 import com.pedacinhodemaria.shared.exception.InvalidPhoneNumberException;
 import com.pedacinhodemaria.shared.exception.OrderNotFoundException;
@@ -45,13 +46,14 @@ class OrderControllerTest {
 
     @Mock private CreateOrderUseCase createOrderUseCase;
     @Mock private OrderQueryService orderQueryService;
+    @Mock private PickupTimePolicy pickupTimePolicy;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @BeforeEach
     void setUp() {
-        OrderController controller = new OrderController(createOrderUseCase, orderQueryService);
+        OrderController controller = new OrderController(createOrderUseCase, orderQueryService, pickupTimePolicy);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();

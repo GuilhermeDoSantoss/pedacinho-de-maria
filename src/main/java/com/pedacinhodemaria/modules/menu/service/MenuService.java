@@ -1,9 +1,14 @@
 package com.pedacinhodemaria.modules.menu.service;
 
+import com.pedacinhodemaria.modules.menu.domain.Drink;
 import com.pedacinhodemaria.modules.menu.domain.Meal;
+import com.pedacinhodemaria.modules.menu.dto.DrinkResponse;
 import com.pedacinhodemaria.modules.menu.dto.MealResponse;
-import com.pedacinhodemaria.modules.menu.repository.MealRepository;
+import com.pedacinhodemaria.modules.menu.dto.MenuResponse;
+import com.pedacinhodemaria.modules.menu.mapper.DrinkMapper;
 import com.pedacinhodemaria.modules.menu.mapper.MealMapper;
+import com.pedacinhodemaria.modules.menu.repository.DrinkRepository;
+import com.pedacinhodemaria.modules.menu.repository.MealRepository;
 import com.pedacinhodemaria.shared.exception.MealNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,12 +27,24 @@ import java.util.List;
 public class MenuService {
 
     private final MealRepository mealRepository;
+    private final DrinkRepository drinkRepository;
     private final MealMapper mealMapper;
+    private final DrinkMapper drinkMapper;
 
-    public List<MealResponse> getTodayMenu() {
-        return mealRepository.findByActiveTrueOrderByDisplayOrderAsc().stream()
+    public MenuResponse getMenu() {
+        List<MealResponse> meals = mealRepository.findByActiveTrueOrderByDisplayOrderAsc().stream()
                 .map(mealMapper::toResponse)
                 .toList();
+
+        List<DrinkResponse> drinks = drinkRepository.findByActiveTrueOrderByDisplayOrderAsc().stream()
+                .map(drinkMapper::toResponse)
+                .toList();
+
+        return new MenuResponse(meals, drinks);
+    }
+
+    public List<MealResponse> getTodayMenu() {
+        return getMenu().meals();
     }
 
     /**

@@ -88,6 +88,19 @@ main {
     flex: 1;
 }
 
+/* Wrapper único usado por todas as seções de cardápio renderizadas via JS
+   (pratos, acompanhamentos, extras, bebidas): um h3 + um grid/lista, nada
+   aninhado dentro de outro wrapper equivalente. Isso é o que elimina o
+   container duplicado que existia entre menuRenderer.js e orderForm.js
+   para extras/bebidas. */
+.menu-section {
+    width: 100%;
+}
+
+.menu-section + .menu-section {
+    margin-top: var(--space-lg);
+}
+
 /* ---------- Estado de carregamento do cardápio ---------- */
 
 .menu-state {
@@ -111,15 +124,32 @@ main {
    serrilhada é o único momento de ousadia visual da tela; todo o resto
    permanece disciplinado ao redor dela. */
 
+/*
+ * Grid sempre ativo (não depende mais de min-width: 640px) e sempre com
+ * `minmax(0, 1fr)` nas colunas — não apenas `1fr`.
+ *
+ * Causa raiz do bug de alinhamento: com `grid-template-columns: 1fr 1fr`
+ * (sem minmax), o tamanho MÍNIMO de cada track de grid é `auto`, ou seja,
+ * o tamanho de conteúdo do maior item daquela coluna (imagem, nome longo
+ * do prato). Se esse conteúdo for mais largo que a fração disponível, a
+ * track cresce além do 1fr para acomodá-lo — o grid como um todo estoura a
+ * largura do container pai. Como `#app` tem `max-width` + `margin: 0 auto`,
+ * esse excesso empurra o conjunto visualmente para a direita em vez de
+ * respeitar as duas colunas dentro da largura disponível ("grid blowout").
+ * `minmax(0, 1fr)` zera o mínimo de cada track, forçando o conteúdo a
+ * encolher dentro da fração — não a alargar o grid.
+ */
 .meal-grid {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-lg);
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-sm);
+    width: 100%;
 }
 
 .meal-card {
     display: block;
     width: 100%;
+    min-width: 0; /* item de grid não encolhe abaixo do seu conteúdo por padrão; sem isso o minmax(0,1fr) do pai não tem efeito */
     text-align: left;
     background: var(--color-surface);
     border-radius: var(--radius-md);
@@ -152,11 +182,29 @@ main {
     transform: scale(1.04);
 }
 
+.meal-card--daily {
+    border: 2px solid var(--color-accent);
+}
+
+.meal-card__daily-badge {
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-sm);
+    background: var(--color-accent);
+    color: var(--color-surface);
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 4px 10px;
+    border-radius: 999px;
+    z-index: 1;
+}
+
 .meal-card__content {
     padding: var(--space-md);
     position: relative;
 }
-
 /* Borda serrilhada entre a imagem e o conteúdo, como se o ticket tivesse sido destacado. */
 .meal-card__content::before {
     content: '';
@@ -205,7 +253,7 @@ main {
 
 .side-dish-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: var(--space-sm);
 }
 
@@ -214,6 +262,7 @@ main {
     flex-direction: column;
     align-items: center;
     gap: var(--space-xs);
+    min-width: 0;
     padding: var(--space-sm);
     background: var(--color-surface);
     border: 2px solid var(--color-border);
@@ -248,6 +297,68 @@ main {
 
 .side-dish-card__price--included {
     color: var(--color-success);
+}
+
+/* ---------- Bebidas (mesmo layout visual dos acompanhamentos, seleção múltipla) ---------- */
+
+.drink-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-sm);
+}
+
+.drink-card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+    min-width: 0;
+    padding: var(--space-sm);
+    background: var(--color-surface);
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    text-align: center;
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+}
+
+/* Mesmo padrão de "input invisível + card customizado reage ao estado"
+   já usado em .extra-item, .order-type-option e .payment-option. */
+.drink-card input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.drink-card:has(input:checked) {
+    border-color: var(--color-primary);
+    background: color-mix(in srgb, var(--color-primary) 8%, var(--color-surface));
+    transform: translateY(-2px);
+}
+
+.drink-card:has(input:focus-visible) {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+.drink-card__image {
+    width: 64px;
+    height: 64px;
+    object-fit: cover;
+    border-radius: 50%;
+    background: var(--color-border);
+}
+
+.drink-card__name {
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.drink-card__price {
+    color: var(--color-primary);
+    font-weight: 600;
+    font-size: 0.8rem;
 }
 
 /* ---------- Extras ---------- */
@@ -561,8 +672,7 @@ main {
     }
 
     .meal-grid {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
+        gap: var(--space-lg);
     }
 }
 

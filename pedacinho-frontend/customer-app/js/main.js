@@ -25,10 +25,10 @@ async function loadMenu() {
     const errorState = qs('#menu-error');
 
     try {
-        const meals = await fetchMenu();
+        const menu = await fetchMenu();
         hide(loadingState);
         show(menuContainer);
-        renderMenu(menuContainer, meals, selectMeal);
+        renderMenu(menuContainer, menu, selectMeal);
     } catch (err) {
         console.error('Falha ao carregar cardápio:', err);
         hide(loadingState);

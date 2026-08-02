@@ -1,7 +1,9 @@
 package com.pedacinhodemaria.modules.order.service;
 
+import com.pedacinhodemaria.modules.menu.domain.Drink;
 import com.pedacinhodemaria.modules.menu.domain.Extra;
 import com.pedacinhodemaria.modules.menu.domain.SideDish;
+import com.pedacinhodemaria.modules.menu.service.DrinkService;
 import com.pedacinhodemaria.modules.menu.service.ExtraService;
 import com.pedacinhodemaria.modules.menu.service.MenuService;
 import com.pedacinhodemaria.modules.menu.domain.Meal;
@@ -44,6 +46,7 @@ class CreateOrderUseCaseTest {
     @Mock private MenuService menuService;
     @Mock private SideDishService sideDishService;
     @Mock private ExtraService extraService;
+    @Mock private DrinkService drinkService;
     @Mock private OrderRepository orderRepository;
     @Mock private OrderMapper orderMapper;
     @Mock private OrderEventPublisher eventPublisher;
@@ -78,7 +81,7 @@ class CreateOrderUseCaseTest {
             }
         };
         pickupTimePolicy = new PickupTimePolicy(fixedClock);
-        useCase = new CreateOrderUseCase(menuService, sideDishService, extraService, orderRepository,
+        useCase = new CreateOrderUseCase(menuService, sideDishService, extraService, drinkService, orderRepository,
                 orderMapper, eventPublisher, codeGenerator, pickupTimePolicy, phoneNumberNormalizer);
 
         activeMeal = Meal.builder()
@@ -199,12 +202,12 @@ class CreateOrderUseCaseTest {
         when(menuService.getActiveMealOrThrow("meal-1")).thenReturn(activeMeal);
         when(sideDishService.getActiveSideDishOrThrow("side-1")).thenReturn(activeSideDish);
 
-        var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, LocalTime.of(11, 15),
+        var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, LocalTime.of(10, 59),
                 OrderType.DINE_IN, null, PaymentMethod.CASH, null, null);
 
         assertThatThrownBy(() -> useCase.execute(request))
                 .isInstanceOf(InvalidPickupTimeException.class)
-                .hasMessageContaining("11:30");
+                .hasMessageContaining("11:00");
 
         verifyNoInteractions(orderRepository, eventPublisher);
     }
@@ -219,9 +222,21 @@ class CreateOrderUseCaseTest {
 
         assertThatThrownBy(() -> useCase.execute(request))
                 .isInstanceOf(InvalidPickupTimeException.class)
-                .hasMessageContaining("11:30");
+                .hasMessageContaining("15:30");
 
         verifyNoInteractions(orderRepository, eventPublisher);
+    }
+
+    @Test
+    void acceptsPickupTimeAtOpeningTime() {
+        stubHappyPathDependencies();
+
+        var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, null, LocalTime.of(11, 0),
+                OrderType.DINE_IN, null, PaymentMethod.PIX, null, null);
+
+        useCase.execute(request);
+
+        verify(orderRepository).save(any(Order.class));
     }
 
     @Test
@@ -256,6 +271,25 @@ class CreateOrderUseCaseTest {
         useCase.execute(request);
 
         verify(orderRepository).save(argThat(order -> Boolean.TRUE.equals(order.getNeedsDisposableCutlery())));
+    }
+
+    @Test
+    void persistsSelectedDrinksAndIncludesTheirPriceInTheTotal() {
+        stubHappyPathDependencies();
+        Drink soda = Drink.builder().id("drink-1").name("Coca-Cola").price(new BigDecimal("6.50")).active(true).build();
+        when(drinkService.getActiveDrinkOrThrow("drink-1")).thenReturn(soda);
+
+        var request = new CreateOrderRequest("Maria Silva", "meal-1", "side-1", null, List.of("drink-1"), aValidPickupTime(),
+                OrderType.DINE_IN, null, PaymentMethod.PIX, null, null);
+
+        useCase.execute(request);
+
+        verify(orderRepository).save(argThat(order ->
+                order.getDrinks() != null
+                        && order.getDrinks().size() == 1
+                        && "Coca-Cola".equals(order.getDrinks().get(0).getDrinkName())
+                        && order.getTotalPrice().compareTo(new BigDecimal("35.40")) == 0
+        ));
     }
 
     @Test

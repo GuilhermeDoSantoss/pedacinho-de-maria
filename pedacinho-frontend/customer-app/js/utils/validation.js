@@ -1,18 +1,22 @@
 /**
  * Validação client-side — existe só para feedback instantâneo (evitar que o
  * cliente preencha as 6 telas e descubra um erro só no fim). O backend
- * (CreateOrderUseCase) é a única fonte de verdade; se as duas divergirem, a
+ * (PickupTimePolicy) é a única fonte de verdade; se as duas divergirem, a
  * resposta de erro da API prevalece e é exibida normalmente.
- *
- * As constantes de horário de funcionamento abaixo duplicam OPENING_TIME/
- * LAST_PICKUP_TIME do backend. É uma duplicação real e consciente — não há
- * endpoint de configuração pública para consultar isso ainda (faz sentido
- * criar um quando o Admin Panel existir e o horário deixar de ser fixo).
- * Até lá, se o horário de funcionamento mudar, precisa atualizar nos dois
- * lugares — documentado aqui para não ser esquecido.
  */
-const OPENING_TIME_MINUTES = 11 * 60;
-const LAST_PICKUP_TIME_MINUTES = 15 * 60 + 30;
+let pickupTimePolicy = null;
+
+export async function loadPickupTimePolicy() {
+    const response = await fetch('http://localhost:8080/api/v1/orders/pickup-time-policy');
+    pickupTimePolicy = await response.json();
+}
+
+function getPickupTimePolicy() {
+    if (!pickupTimePolicy) {
+        return { openingTime: '11:00', closingTime: '15:30' };
+    }
+    return pickupTimePolicy;
+}
 
 export function validateCustomerName(name) {
     const trimmed = name.trim();
@@ -51,11 +55,17 @@ export function validatePickupTime(timeString) {
     const now = new Date();
     const nowMinutes = now.getHours() * 60 + now.getMinutes();
 
+    const policy = getPickupTimePolicy();
+    const [openingHours, openingMinutes] = policy.openingTime.split(':').map(Number);
+    const [closingHours, closingMinutes] = policy.closingTime.split(':').map(Number);
+    const openingMinutesValue = openingHours * 60 + openingMinutes;
+    const closingMinutesValue = closingHours * 60 + closingMinutes;
+
     if (totalMinutes < nowMinutes) {
         return 'Horário de retirada não pode estar no passado';
     }
-    if (totalMinutes < OPENING_TIME_MINUTES || totalMinutes > LAST_PICKUP_TIME_MINUTES) {
-        return 'Horário de retirada deve ser entre 11:00 e 15:30';
+    if (totalMinutes < openingMinutesValue || totalMinutes > closingMinutesValue) {
+        return `Horário de retirada deve ser entre ${policy.openingTime} e ${policy.closingTime}`;
     }
     return null;
 }

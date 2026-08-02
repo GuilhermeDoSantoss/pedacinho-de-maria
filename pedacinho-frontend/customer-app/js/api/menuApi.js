@@ -22,6 +22,14 @@ export async function fetchSideDishes() {
     return response.json();
 }
 
+export async function fetchDrinks() {
+    const response = await fetch(`${CONFIG.API_BASE_URL}/drinks`);
+    if (!response.ok) {
+        throw new Error(`Falha ao carregar bebidas (status ${response.status})`);
+    }
+    return response.json();
+}
+
 export async function fetchExtras() {
     const response = await fetch(`${CONFIG.API_BASE_URL}/extras`);
     if (!response.ok) {

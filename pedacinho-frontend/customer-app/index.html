@@ -18,14 +18,25 @@
     </header>
 
     <main>
-        <!-- Etapa 0: Cardápio -->
+        <!--
+            Etapa 0: Cardápio
+
+            IMPORTANTE: #menu-list é só o ponto de montagem — não leva a
+            classe `meal-grid` aqui. Quem monta a estrutura
+            `.menu-section > .meal-grid` é o menuRenderer.js. Antes essa
+            classe estava duplicada (aqui E dentro do JS), o que criava um
+            grid de 2 colunas contendo, como segundo item, outro grid de 2
+            colunas — o grid interno ficava espremido em 1 coluna só do
+            externo, e era essa a causa real dos cards aparecerem
+            deslocados para a direita.
+        -->
         <section id="step-menu" class="step">
             <h2 class="step__title">Cardápio de hoje</h2>
             <p id="menu-loading" class="menu-state">Carregando cardápio...</p>
             <p id="menu-error" class="menu-state menu-state--error hidden">
                 Não foi possível carregar o cardápio. Verifique sua conexão e recarregue a página.
             </p>
-            <div id="menu-list" class="meal-grid hidden"></div>
+            <div id="menu-list" class="hidden"></div>
         </section>
 
         <!-- Etapa 1: Confirmar prato escolhido -->
@@ -44,7 +55,7 @@
         <!-- Etapa 2: Acompanhamento (obrigatório) -->
         <section id="step-side-dish" class="step hidden">
             <h2 class="step__title">Escolha o acompanhamento</h2>
-            <div id="side-dish-list" class="side-dish-grid"></div>
+            <div id="side-dish-list"></div>
             <p id="side-dish-error" class="form-error hidden"></p>
             <div class="step__actions">
                 <button id="side-dish-back" type="button" class="btn btn--secondary">Voltar</button>
@@ -55,13 +66,24 @@
         <!-- Etapa 3: Extras (opcional) -->
         <section id="step-extras" class="step hidden">
             <h2 class="step__title">Quer adicionar algum extra?</h2>
-            <p class="step__subtitle">Opcional, escolha quantos quiser</p>
-            <div id="extras-list" class="extras-list"></div>
+            <div id="extras-list"></div>
             <p id="extras-error" class="form-error hidden"></p>
             <p id="extras-estimated-total" class="extras-total"></p>
             <div class="step__actions">
                 <button id="extras-back" type="button" class="btn btn--secondary">Voltar</button>
                 <button id="extras-continue" type="button" class="btn btn--primary">Continuar</button>
+            </div>
+        </section>
+
+        <!-- Etapa 3.5: Bebidas (opcional, agora com tela própria — não mais junto com Extras) -->
+        <section id="step-drinks" class="step hidden">
+            <h2 class="step__title">Quer adicionar alguma bebida?</h2>
+            <div id="drinks-list"></div>
+            <p id="drinks-error" class="form-error hidden"></p>
+            <p id="drinks-estimated-total" class="extras-total"></p>
+            <div class="step__actions">
+                <button id="drinks-back" type="button" class="btn btn--secondary">Voltar</button>
+                <button id="drinks-continue" type="button" class="btn btn--primary">Continuar</button>
             </div>
         </section>
 
@@ -83,7 +105,7 @@
         <section id="step-pickup-time" class="step hidden">
             <h2 class="step__title">Horário de retirada</h2>
             <div class="form-field">
-                <input id="input-pickup-time" type="time" class="form-input" min="11:30" max="15:30">
+                <input id="input-pickup-time" type="time" class="form-input" min="11:00" max="15:30">
                 <p id="pickup-time-error" class="form-error hidden"></p>
             </div>
             <div class="step__actions">

@@ -76,20 +76,15 @@ public class SecurityConfig {
     }
 
     private CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(allowedOrigins);
-        configuration.setAllowedMethods(List.of("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(List.of("*"));
-        // Removido allowCredentials(true): a aplicação é 100% stateless (sem
-        // cookie de sessão, sem login) — nenhum request precisa carregar
-        // credenciais. Deixar isso ligado sem uso real só adiciona restrições
-        // extras de CORS (navegadores são mais estritos com preflight quando
-        // credentials=true) sem nenhum benefício, e é uma causa documentada
-        // de comportamento inconsistente entre requisições same-origin
-        // (Swagger, curl) e cross-origin (fetch do navegador).
+    CorsConfiguration configuration = new CorsConfiguration();
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+    configuration.setAllowedOriginPatterns(List.of("*"));
+    configuration.setAllowedMethods(List.of("*"));
+    configuration.setAllowedHeaders(List.of("*"));
+
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration("/**", configuration);
+
+    return source;
+}
 }

@@ -47,6 +47,11 @@ export function renderConfirmation(container, order) {
         details.push(createElement('dt', {}, ['Extras']), createElement('dd', {}, [extrasText]));
     }
 
+    if (order.drinks && order.drinks.length > 0) {
+        const drinksText = order.drinks.map((d) => d.drinkName).join(', ');
+        details.push(createElement('dt', {}, ['Bebidas']), createElement('dd', {}, [drinksText]));
+    }
+
     details.push(
         createElement('dt', {}, ['Total']),
         createElement('dd', { className: 'confirmation__total-value' }, [formatCurrency(order.totalPrice)]),

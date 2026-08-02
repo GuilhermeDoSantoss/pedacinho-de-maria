@@ -1,9 +1,14 @@
 package com.pedacinhodemaria.modules.menu.service;
 
+import com.pedacinhodemaria.modules.menu.domain.Drink;
 import com.pedacinhodemaria.modules.menu.domain.Meal;
 import com.pedacinhodemaria.modules.menu.domain.MealType;
+import com.pedacinhodemaria.modules.menu.dto.DrinkResponse;
 import com.pedacinhodemaria.modules.menu.dto.MealResponse;
+import com.pedacinhodemaria.modules.menu.dto.MenuResponse;
+import com.pedacinhodemaria.modules.menu.mapper.DrinkMapper;
 import com.pedacinhodemaria.modules.menu.mapper.MealMapper;
+import com.pedacinhodemaria.modules.menu.repository.DrinkRepository;
 import com.pedacinhodemaria.modules.menu.repository.MealRepository;
 import com.pedacinhodemaria.shared.exception.MealNotFoundException;
 import org.junit.jupiter.api.Test;
@@ -25,7 +30,9 @@ import static org.mockito.Mockito.when;
 class MenuServiceTest {
 
     @Mock private MealRepository mealRepository;
+    @Mock private DrinkRepository drinkRepository;
     @Mock private MealMapper mealMapper;
+    @Mock private DrinkMapper drinkMapper;
 
     @InjectMocks
     private MenuService menuService;
@@ -43,23 +50,32 @@ class MenuServiceTest {
     }
 
     @Test
-    void getTodayMenuReturnsOnlyActiveMealsOrderedByDisplayOrder() {
+    void getMenuReturnsActiveMealsAndDrinksOrderedByDisplayOrder() {
         Meal meal = activeMeal();
-        MealResponse response = mock(MealResponse.class);
+        Drink drink = Drink.builder().id("drink-1").name("Coca-Cola").active(true).displayOrder(1).build();
+        MealResponse mealResponse = mock(MealResponse.class);
+        DrinkResponse drinkResponse = mock(DrinkResponse.class);
 
         when(mealRepository.findByActiveTrueOrderByDisplayOrderAsc()).thenReturn(List.of(meal));
-        when(mealMapper.toResponse(meal)).thenReturn(response);
+        when(drinkRepository.findByActiveTrueOrderByDisplayOrderAsc()).thenReturn(List.of(drink));
+        when(mealMapper.toResponse(meal)).thenReturn(mealResponse);
+        when(drinkMapper.toResponse(drink)).thenReturn(drinkResponse);
 
-        List<MealResponse> result = menuService.getTodayMenu();
+        MenuResponse result = menuService.getMenu();
 
-        assertThat(result).containsExactly(response);
+        assertThat(result.meals()).containsExactly(mealResponse);
+        assertThat(result.drinks()).containsExactly(drinkResponse);
     }
 
     @Test
-    void getTodayMenuReturnsEmptyListWhenNoActiveMeals() {
+    void getMenuReturnsEmptyListsWhenNoActiveItems() {
         when(mealRepository.findByActiveTrueOrderByDisplayOrderAsc()).thenReturn(List.of());
+        when(drinkRepository.findByActiveTrueOrderByDisplayOrderAsc()).thenReturn(List.of());
 
-        assertThat(menuService.getTodayMenu()).isEmpty();
+        MenuResponse result = menuService.getMenu();
+
+        assertThat(result.meals()).isEmpty();
+        assertThat(result.drinks()).isEmpty();
     }
 
     @Test

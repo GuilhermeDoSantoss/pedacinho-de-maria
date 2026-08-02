@@ -1,8 +1,10 @@
 package com.pedacinhodemaria.modules.order.mapper;
 
 import com.pedacinhodemaria.modules.order.domain.Order;
+import com.pedacinhodemaria.modules.order.domain.OrderDrinkSnapshot;
 import com.pedacinhodemaria.modules.order.domain.OrderExtraSnapshot;
 import com.pedacinhodemaria.modules.order.domain.TimerCalculator;
+import com.pedacinhodemaria.modules.order.dto.OrderDrinkResponse;
 import com.pedacinhodemaria.modules.order.dto.OrderExtraResponse;
 import com.pedacinhodemaria.modules.order.dto.OrderResponse;
 import org.mapstruct.Mapper;
@@ -38,4 +40,6 @@ public interface OrderMapper {
      * dentro de toResponse() use exatamente este método, sem ambiguidade.
      */
     OrderExtraResponse toExtraResponse(OrderExtraSnapshot snapshot);
+
+    OrderDrinkResponse toDrinkResponse(OrderDrinkSnapshot snapshot);
 }

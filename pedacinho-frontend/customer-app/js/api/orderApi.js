@@ -12,6 +12,14 @@ export class ApiRequestError extends Error {
     }
 }
 
+export async function fetchPickupTimePolicy() {
+    const response = await fetch(`${CONFIG.API_BASE_URL}/orders/pickup-time-policy`);
+    if (!response.ok) {
+        throw new Error(`Falha ao carregar política de horário (status ${response.status})`);
+    }
+    return response.json();
+}
+
 export async function createOrder(payload) {
     const response = await fetch(`${CONFIG.API_BASE_URL}/orders`, {
         method: 'POST',

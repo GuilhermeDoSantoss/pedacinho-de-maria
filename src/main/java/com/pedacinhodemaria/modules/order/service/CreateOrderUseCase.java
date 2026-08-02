@@ -1,12 +1,15 @@
 package com.pedacinhodemaria.modules.order.service;
 
+import com.pedacinhodemaria.modules.menu.domain.Drink;
 import com.pedacinhodemaria.modules.menu.domain.Extra;
 import com.pedacinhodemaria.modules.menu.domain.SideDish;
+import com.pedacinhodemaria.modules.menu.service.DrinkService;
 import com.pedacinhodemaria.modules.menu.service.ExtraService;
 import com.pedacinhodemaria.modules.menu.service.MenuService;
 import com.pedacinhodemaria.modules.menu.domain.Meal;
 import com.pedacinhodemaria.modules.menu.service.SideDishService;
 import com.pedacinhodemaria.modules.order.domain.Order;
+import com.pedacinhodemaria.modules.order.domain.OrderDrinkSnapshot;
 import com.pedacinhodemaria.modules.order.domain.OrderExtraSnapshot;
 import com.pedacinhodemaria.modules.order.domain.OrderStatus;
 import com.pedacinhodemaria.modules.order.domain.OrderType;
@@ -44,6 +47,7 @@ public class CreateOrderUseCase {
     private final MenuService menuService;
     private final SideDishService sideDishService;
     private final ExtraService extraService;
+    private final DrinkService drinkService;
     private final OrderRepository orderRepository;
     private final OrderMapper orderMapper;
     private final OrderEventPublisher eventPublisher;
@@ -72,10 +76,11 @@ public class CreateOrderUseCase {
         Meal meal = menuService.getActiveMealOrThrow(request.mealId());
         SideDish sideDish = resolveSideDish(meal, request.sideDishId());
         List<Extra> extras = resolveExtras(request.extraIds());
+        List<Drink> drinks = resolveDrinks(request.drinkIds());
 
         pickupTimePolicy.validate(request.pickupTime());
 
-        BigDecimal totalPrice = calculateTotal(meal, sideDish, extras);
+        BigDecimal totalPrice = calculateTotal(meal, sideDish, extras, drinks);
 
         Order order = Order.builder()
                 .orderCode(generateUniqueOrderCode())
@@ -88,6 +93,7 @@ public class CreateOrderUseCase {
                 .sideDishName(sideDish != null ? sideDish.getName() : null)
                 .sideDishPrice(sideDish != null ? sideDish.getPrice() : null)
                 .extras(toExtraSnapshots(extras))
+                .drinks(toDrinkSnapshots(drinks))
                 .totalPrice(totalPrice)
                 .observation(sanitizeObservation(request.observation()))
                 .phoneNumber(resolvePhoneNumber(request.orderType(), request.phoneNumber()))
@@ -126,6 +132,15 @@ public class CreateOrderUseCase {
                 .toList();
     }
 
+    private List<Drink> resolveDrinks(List<String> drinkIds) {
+        if (drinkIds == null || drinkIds.isEmpty()) {
+            return List.of();
+        }
+        return drinkIds.stream()
+                .map(drinkService::getActiveDrinkOrThrow)
+                .toList();
+    }
+
     private List<OrderExtraSnapshot> toExtraSnapshots(List<Extra> extras) {
         return extras.stream()
                 .map(extra -> OrderExtraSnapshot.builder()
@@ -136,13 +151,23 @@ public class CreateOrderUseCase {
                 .toList();
     }
 
+    private List<OrderDrinkSnapshot> toDrinkSnapshots(List<Drink> drinks) {
+        return drinks.stream()
+                .map(drink -> OrderDrinkSnapshot.builder()
+                        .drinkId(drink.getId())
+                        .drinkName(drink.getName())
+                        .drinkPrice(drink.getPrice())
+                        .build())
+                .toList();
+    }
+
     /**
      * sideDish.getPrice() pode ser null (acompanhamento incluso sem custo
      * adicional) — tratado como ZERO aqui, não como erro. Cada extra sempre
      * tem preço não-nulo (garantido no domínio Extra), então a soma dos
      * extras nunca precisa desse mesmo tratamento defensivo.
      */
-    private BigDecimal calculateTotal(Meal meal, SideDish sideDish, List<Extra> extras) {
+    private BigDecimal calculateTotal(Meal meal, SideDish sideDish, List<Extra> extras, List<Drink> drinks) {
         BigDecimal total = meal.getPrice();
 
         if (sideDish != null && sideDish.getPrice() != null) {
@@ -150,6 +175,9 @@ public class CreateOrderUseCase {
         }
         for (Extra extra : extras) {
             total = total.add(extra.getPrice());
+        }
+        for (Drink drink : drinks) {
+            total = total.add(drink.getPrice());
         }
         return total;
     }
