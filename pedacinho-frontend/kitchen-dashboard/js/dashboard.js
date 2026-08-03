@@ -1,6 +1,6 @@
 import { CONFIG } from './config.js';
 import { qs, show, hide } from './utils/domHelpers.js';
-import { fetchActiveOrders, updateOrderStatus } from './api/ordersApi.js';
+import { fetchActiveOrders, updateOrderStatus, sendReadyWhatsAppMessage } from './api/ordersApi.js';
 import { ColumnManager } from './modules/columnManager.js';
 import { StompClient } from './modules/wsClient.js';
 
@@ -28,7 +28,7 @@ async function startShift() {
     hide(qs('#shift-gate'));
     show(qs('#board'));
 
-    columnManager = new ColumnManager(handleAdvance);
+    columnManager = new ColumnManager(handleAdvance, handleNotifyReady);
 
     await loadInitialOrders();
     connectWebSocket();
@@ -57,6 +57,16 @@ async function handleAdvance(orderCode, nextStatus) {
     } catch (err) {
         console.error('Falha ao atualizar status:', err);
         alert('Não foi possível atualizar o pedido. Tente novamente.');
+    }
+}
+
+/** Chamado quando o funcionário clica no telefone do cliente no ticket — dispara a mensagem de WhatsApp via backend. */
+async function handleNotifyReady(orderCode) {
+    try {
+        await sendReadyWhatsAppMessage(orderCode);
+    } catch (err) {
+        console.error('Falha ao enviar mensagem de WhatsApp:', err);
+        alert('Não foi possível enviar a mensagem de WhatsApp. Tente novamente.');
     }
 }
 

@@ -3,6 +3,7 @@ package com.pedacinhodemaria.modules.order.controller;
 import com.pedacinhodemaria.modules.order.service.CreateOrderUseCase;
 import com.pedacinhodemaria.modules.order.service.OrderQueryService;
 import com.pedacinhodemaria.modules.order.service.PickupTimePolicy;
+import com.pedacinhodemaria.modules.order.service.SendOrderReadyWhatsAppMessageUseCase;
 import com.pedacinhodemaria.modules.order.dto.CreateOrderRequest;
 import com.pedacinhodemaria.modules.order.dto.OrderResponse;
 import com.pedacinhodemaria.modules.order.dto.PickupTimePolicyResponse;
@@ -20,6 +21,13 @@ import org.springframework.web.bind.annotation.*;
  * o cliente nunca faz login. Não há rate limiting ainda (planejado para uma
  * fase futura de hardening) — a única proteção hoje é a validação de negócio
  * em CreateOrderUseCase.
+ *
+ * `sendReadyWhatsAppMessage` também vive aqui (e não em um controller novo)
+ * porque continua sendo uma ação sobre o recurso /orders/{orderCode} — o
+ * mesmo padrão de "consulta pelo orderCode" que já existe em getOrder().
+ * Hoje é chamado pelo Dashboard da cozinha (sem auth, mesma situação de
+ * todo o resto deste controller); se o projeto ganhar autenticação de
+ * funcionário no futuro, este é o método a proteger primeiro.
  */
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -30,6 +38,7 @@ public class OrderController {
     private final CreateOrderUseCase createOrderUseCase;
     private final OrderQueryService orderQueryService;
     private final PickupTimePolicy pickupTimePolicy;
+    private final SendOrderReadyWhatsAppMessageUseCase sendOrderReadyWhatsAppMessageUseCase;
 
     @PostMapping
     @Operation(summary = "Cria um pedido e notifica a cozinha em tempo real")
@@ -51,5 +60,12 @@ public class OrderController {
                 pickupTimePolicy.getOpeningTime().toString(),
                 pickupTimePolicy.getClosingTime().toString()
         ));
+    }
+
+    @PostMapping("/{orderCode}/whatsapp-ready-message")
+    @Operation(summary = "Dispara manualmente, via WhatsApp, o aviso de pedido pronto para o cliente")
+    public ResponseEntity<Void> sendReadyWhatsAppMessage(@PathVariable String orderCode) {
+        sendOrderReadyWhatsAppMessageUseCase.execute(orderCode);
+        return ResponseEntity.noContent().build();
     }
 }

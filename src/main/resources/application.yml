@@ -35,6 +35,11 @@ app:
   # Retenção de pedidos no MongoDB via índice TTL. Configurável e alterável em
   # runtime (ver MongoIndexInitializer.updateRetentionDays) sem downtime.
   order-retention-days: ${ORDER_RETENTION_DAYS:30}
+    
+  whatsapp:
+    api-url: https://graph.facebook.com/v23.0
+    phone-number-id: teste
+    access-token: teste
 
 management:
   endpoints:

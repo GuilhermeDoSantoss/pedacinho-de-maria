@@ -1,4 +1,4 @@
-import { qs, createElement, formatCurrency } from '../utils/domHelpers.js';
+import { qs, show, createElement, formatCurrency } from '../utils/domHelpers.js';
 
 const STATUS_LABELS = {
     RECEIVED: 'Recebido',
@@ -88,11 +88,20 @@ export function renderConfirmation(container, order) {
                     [STATUS_LABELS[order.status] ?? order.status]),
             ]),
 
+            // Começa oculto — updateStatusBadge() revela quando o evento de
+            // WebSocket trouxer newStatus === 'READY'. Renderizado aqui (e
+            // não injetado dinamicamente depois) para já existir no DOM
+            // desde a primeira tela de confirmação, cobrindo o caso raro de
+            // o pedido já chegar como READY no primeiro fetch.
+            createElement('div', { className: 'confirmation__ready-message hidden', id: 'ready-message' }, [
+                createElement('p', {}, ['🎉 Seu pedido está pronto! Pode se dirigir ao balcão para retirá-lo. Bom apetite!']),
+            ]),
+
             createElement('button', {
                 className: 'btn btn--secondary',
                 type: 'button',
                 onClick: () => window.location.reload(),
-            }, ['Fazer novo pedido']),
+            }, ['Fazer um novo pedido']),
         ])
     );
 }
@@ -104,4 +113,12 @@ export function updateStatusBadge(newStatus) {
 
     badge.textContent = STATUS_LABELS[newStatus] ?? newStatus;
     badge.dataset.status = newStatus;
+
+    // Único evento novo tratado aqui: quando o funcionário muda o status
+    // para READY no Dashboard, o mesmo evento de WebSocket que já atualiza
+    // o badge (nenhum tópico/subscrição nova) também revela essa mensagem.
+    if (newStatus === 'READY') {
+        const readyMessage = qs('#ready-message');
+        if (readyMessage) show(readyMessage);
+    }
 }

@@ -18,9 +18,11 @@ const COLUMN_BY_STATUS = {
 export class ColumnManager {
     #orders = new Map(); // orderCode -> { order, element, preparingEnteredAt }
     #onAdvance;
+    #onNotifyReady;
 
-    constructor(onAdvance) {
+    constructor(onAdvance, onNotifyReady) {
         this.#onAdvance = onAdvance;
+        this.#onNotifyReady = onNotifyReady;
     }
 
     /** Carga inicial (GET /kitchen/orders) — substitui tudo que existir nas colunas. */
@@ -58,7 +60,7 @@ export class ColumnManager {
         // para a automação de 35 minutos em checkAutoReadyTransitions().
         entry.preparingEnteredAt = newStatus === 'PREPARING' ? Date.now() : null;
 
-        const newElement = createOrderTicket(entry.order, this.#onAdvance);
+        const newElement = createOrderTicket(entry.order, this.#onAdvance, this.#onNotifyReady);
         qs(`#${COLUMN_BY_STATUS[newStatus]} .column__list`).prepend(newElement);
         entry.element = newElement;
     }
@@ -102,7 +104,7 @@ export class ColumnManager {
     }
 
     #renderNew(order) {
-        const element = createOrderTicket(order, this.#onAdvance);
+        const element = createOrderTicket(order, this.#onAdvance, this.#onNotifyReady);
         qs(`#${COLUMN_BY_STATUS[order.status]} .column__list`).appendChild(element);
 
         // Para pedidos que já chegam em PREPARING na carga inicial (GET

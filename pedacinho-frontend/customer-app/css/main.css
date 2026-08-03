@@ -635,6 +635,16 @@ main {
     margin-bottom: var(--space-lg);
 }
 
+.confirmation__ready-message {
+    margin-bottom: var(--space-lg);
+    padding: var(--space-md);
+    background: var(--color-success-bg);
+    color: var(--color-success);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    text-align: center;
+}
+
 .status-badge {
     display: inline-block;
     padding: var(--space-xs) var(--space-md);

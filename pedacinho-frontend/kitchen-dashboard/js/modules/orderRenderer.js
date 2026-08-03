@@ -21,7 +21,7 @@ const NEXT_STATUS = {
  * de QUAL é o próximo status vive aqui (NEXT_STATUS), não espalhada pelos
  * botões de cada coluna.
  */
-export function createOrderTicket(order, onAdvance) {
+export function createOrderTicket(order, onAdvance, onNotifyReady) {
     const ticket = createElement('article', {
         className: 'ticket',
         dataset: { orderCode: order.orderCode, status: order.status, timerState: order.timerState },
@@ -49,6 +49,19 @@ export function createOrderTicket(order, onAdvance) {
                 [`Extras: ${order.extras.map((e) => e.extraName).join(', ')}`])
             : createElement('span', {}, []),
 
+        // Bebidas: mesmo padrão de snapshot já usado para extras
+        // (order.drinks já vem populado na OrderResponse via
+        // OrderMapper.toDrinkResponse — nenhuma mudança de backend
+        // necessária aqui). Diferente de extras, essa seção sempre aparece,
+        // mostrando "Nenhuma bebida" quando a lista vier vazia.
+        createElement('div', { className: 'ticket__drinks' }, [
+            createElement('p', { className: 'ticket__drinks-label' }, ['Bebidas:']),
+            order.drinks && order.drinks.length > 0
+                ? createElement('ul', { className: 'ticket__drinks-list' },
+                    order.drinks.map((d) => createElement('li', {}, [d.drinkName])))
+                : createElement('p', { className: 'ticket__drinks-empty' }, ['Nenhuma bebida']),
+        ]),
+
         createElement('div', { className: 'ticket__meta' }, [
             createElement('span', { className: `ticket__badge ticket__badge--${order.orderType.toLowerCase()}` },
                 [ORDER_TYPE_LABELS[order.orderType]]),
@@ -56,13 +69,16 @@ export function createOrderTicket(order, onAdvance) {
             createElement('span', { className: 'ticket__badge' }, [PAYMENT_LABELS[order.paymentMethod]]),
         ]),
 
+        // Clicar no telefone dispara o envio automático da mensagem de
+        // WhatsApp (POST /orders/{orderCode}/whatsapp-ready-message) — não
+        // abre mais o WhatsApp Web em nova aba, por isso virou <button> em
+        // vez de <a href="https://wa.me/...">.
         order.orderType === 'TAKEAWAY' && order.phoneNumber
-            ? createElement('a', {
+            ? createElement('button', {
                 className: 'ticket__contact',
-                href: `https://wa.me/${order.phoneNumber}`,
-                target: '_blank',
-                rel: 'noopener noreferrer',
-            }, [`WhatsApp · ${formatPhoneDisplay(order.phoneNumber)}`])
+                type: 'button',
+                onClick: () => onNotifyReady(order.orderCode),
+            }, [`📲 Avisar no WhatsApp · ${formatPhoneDisplay(order.phoneNumber)}`])
             : createElement('span', {}, []),
 
         order.orderType === 'TAKEAWAY'

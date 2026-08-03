@@ -11,6 +11,7 @@ import com.pedacinhodemaria.modules.order.dto.OrderResponse;
 import com.pedacinhodemaria.modules.order.service.CreateOrderUseCase;
 import com.pedacinhodemaria.modules.order.service.OrderQueryService;
 import com.pedacinhodemaria.modules.order.service.PickupTimePolicy;
+import com.pedacinhodemaria.modules.order.service.SendOrderReadyWhatsAppMessageUseCase;
 import com.pedacinhodemaria.shared.exception.GlobalExceptionHandler;
 import com.pedacinhodemaria.shared.exception.InvalidPhoneNumberException;
 import com.pedacinhodemaria.shared.exception.OrderNotFoundException;
@@ -28,6 +29,8 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -47,13 +50,15 @@ class OrderControllerTest {
     @Mock private CreateOrderUseCase createOrderUseCase;
     @Mock private OrderQueryService orderQueryService;
     @Mock private PickupTimePolicy pickupTimePolicy;
+    @Mock private SendOrderReadyWhatsAppMessageUseCase sendOrderReadyWhatsAppMessageUseCase;
 
     private MockMvc mockMvc;
     private final ObjectMapper objectMapper = new ObjectMapper().registerModule(new JavaTimeModule());
 
     @BeforeEach
     void setUp() {
-        OrderController controller = new OrderController(createOrderUseCase, orderQueryService, pickupTimePolicy);
+        OrderController controller = new OrderController(
+                createOrderUseCase, orderQueryService, pickupTimePolicy, sendOrderReadyWhatsAppMessageUseCase);
         mockMvc = MockMvcBuilders.standaloneSetup(controller)
                 .setControllerAdvice(new GlobalExceptionHandler())
                 .build();
@@ -125,6 +130,23 @@ class OrderControllerTest {
                 .thenThrow(new OrderNotFoundException("PM-ZZZZZ"));
 
         mockMvc.perform(get("/api/v1/orders/PM-ZZZZZ"))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
+    void sendReadyWhatsAppMessageReturns204WhenSuccessful() throws Exception {
+        mockMvc.perform(post("/api/v1/orders/PM-ABCDE/whatsapp-ready-message"))
+                .andExpect(status().isNoContent());
+
+        verify(sendOrderReadyWhatsAppMessageUseCase).execute("PM-ABCDE");
+    }
+
+    @Test
+    void sendReadyWhatsAppMessageReturns404WhenOrderCodeDoesNotExist() throws Exception {
+        doThrow(new OrderNotFoundException("PM-ZZZZZ"))
+                .when(sendOrderReadyWhatsAppMessageUseCase).execute("PM-ZZZZZ");
+
+        mockMvc.perform(post("/api/v1/orders/PM-ZZZZZ/whatsapp-ready-message"))
                 .andExpect(status().isNotFound());
     }
 }
