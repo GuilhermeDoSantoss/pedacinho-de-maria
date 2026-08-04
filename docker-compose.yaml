@@ -12,3 +12,8 @@ services:
       SPRING_PROFILES_ACTIVE: dev
       MONGODB_URI: ${MONGODB_URI}
       CORS_ALLOWED_ORIGINS: http://localhost:5500,http://127.0.0.1:5500,http://localhost:5501,http://127.0.0.1:5501
+      # Opcionais — não têm default hardcoded no application.yml (correto,
+      # não são segredo de mentira). Sem definir no seu .env/shell, a
+      # aplicação sobe normalmente; só o disparo de WhatsApp fica inoperante.
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID:-}
+      WHATSAPP_ACCESS_TOKEN: ${WHATSAPP_ACCESS_TOKEN:-}

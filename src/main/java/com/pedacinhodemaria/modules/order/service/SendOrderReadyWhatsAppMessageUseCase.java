@@ -27,7 +27,7 @@ public class SendOrderReadyWhatsAppMessageUseCase {
 
     private static final String READY_MESSAGE = """
             Olá! \uD83D\uDE0A
-            Seu pedido no Pedacinho de Maria está pronto para retirada.
+            Seu pedido no Pedacinhos de Maria está pronto para retirada.
             Agradecemos a preferência!""";
 
     private final OrderRepository orderRepository;

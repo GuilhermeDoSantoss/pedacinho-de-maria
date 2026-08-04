@@ -9,7 +9,7 @@ spring:
       # propósito. Não há mais um MongoDB local de fallback: o valor precisa
       # vir de MONGODB_URI (string de conexão do Atlas, formato
       # mongodb+srv://...) em qualquer ambiente que rodar esta aplicação.
-      uri: "mongodb+srv://guilhermedevsoft_db_user:Eva082418@cluster0.mux9krh.mongodb.net/pensao-pedacinhos-de-maria?retryWrites=true&w=majority&appName=Cluster0"
+      uri: ${MONGODB_URI}
       auto-index-creation: false # índices são geridos explicitamente por MongoIndexInitializer
 
 server:
@@ -35,11 +35,24 @@ app:
   # Retenção de pedidos no MongoDB via índice TTL. Configurável e alterável em
   # runtime (ver MongoIndexInitializer.updateRetentionDays) sem downtime.
   order-retention-days: ${ORDER_RETENTION_DAYS:30}
-    
+
   whatsapp:
-    api-url: https://graph.facebook.com/v23.0
-    phone-number-id: teste
-    access-token: teste
+    # api-url não é segredo — tem default público. phone-number-id e
+    # access-token são credenciais reais do WhatsApp Business e NÃO têm
+    # default: precisam vir de variável de ambiente em qualquer ambiente,
+    # mesmo padrão já usado acima para MONGODB_URI. Os valores "teste"
+    # anteriores nunca teriam funcionado contra a Cloud API de verdade —
+    # eram placeholder esquecido, não configuração intencional.
+    api-url: ${WHATSAPP_API_URL:https://graph.facebook.com/v23.0}
+    # Default vazio (não obrigatório) de propósito: diferente de MONGODB_URI,
+    # que já era documentado como obrigatório em qualquer ambiente, a
+    # integração de WhatsApp é opcional e sua falha já é tratada de forma
+    # graciosa (ver WhatsAppCloudApiMessageSender — loga o erro, não derruba
+    # a requisição). Faltar essas duas variáveis não deve impedir o boot da
+    # aplicação, só faz o envio de WhatsApp falhar quando disparado — mesmo
+    # comportamento de antes, sem mais um valor-fantasma parecendo real.
+    phone-number-id: ${WHATSAPP_PHONE_NUMBER_ID:}
+    access-token: ${WHATSAPP_ACCESS_TOKEN:}
 
 management:
   endpoints:

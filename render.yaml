@@ -1,0 +1,38 @@
+# Blueprint do Render (https://render.com/docs/blueprint-spec).
+#
+# Uso: Render Dashboard → New → Blueprint → aponte para este repositório.
+# O "Root Directory" do serviço precisa ser configurado como
+# "pedacinho-backend" no dashboard do Render, já que o Dockerfile vive
+# dentro dessa pasta, não na raiz do repositório (o projeto tem 3 pastas
+# irmãs: backend + 2 frontends estáticos).
+#
+# Variáveis marcadas com "sync: false" precisam ser preenchidas manualmente
+# no dashboard do Render (segredos reais — Atlas URI, origens de CORS de
+# produção) — nunca ficam neste arquivo, que é versionado no repositório.
+services:
+  - type: web
+    name: pedacinho-backend
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    # PORT é injetada automaticamente pelo Render — application.yml já lê
+    # ${PORT:${SERVER_PORT:8080}}, então nenhuma configuração adicional é
+    # necessária aqui além de garantir que o app escute nela (já garantido).
+    healthCheckPath: /actuator/health
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: prod
+      - key: MONGODB_URI
+        sync: false
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: ORDER_RETENTION_DAYS
+        value: "30"
+      # Credenciais reais do WhatsApp Business — mesmo motivo de
+      # MONGODB_URI/CORS_ALLOWED_ORIGINS acima: segredo real, preenchido
+      # manualmente no dashboard da Render, nunca neste arquivo versionado.
+      # Não são obrigatórias para a aplicação subir (ver application.yml) —
+      # sem elas, só o disparo de mensagem de WhatsApp fica inoperante.
+      - key: WHATSAPP_PHONE_NUMBER_ID
+        sync: false
+      - key: WHATSAPP_ACCESS_TOKEN
+        sync: false

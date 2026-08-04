@@ -26,3 +26,16 @@ export async function updateOrderStatus(orderCode, newStatus) {
 
     return response.json();
 }
+
+export async function sendReadyWhatsAppMessage(orderCode) {
+    const response = await fetch(
+        `${CONFIG.API_BASE_URL}/orders/${encodeURIComponent(orderCode)}/whatsapp-ready-message`,
+        {
+            method: 'POST'
+        }
+    );
+
+    if (!response.ok) {
+        throw new Error("Erro ao enviar mensagem");
+    }
+}

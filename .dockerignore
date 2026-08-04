@@ -1,0 +1,52 @@
+# O Dockerfile só copia pom.xml e src/ explicitamente — nada do que está
+# listado aqui vaza para dentro da imagem final de qualquer forma. Este
+# .dockerignore existe por outro motivo: reduzir o CONTEXTO de build enviado
+# ao daemon Docker (ou ao builder da Render) a cada `docker build .`. Sem
+# isso, tudo que está dentro da pasta que contém o Dockerfile — mesmo o que
+# nunca é copiado pra imagem — é lido do disco e transmitido antes do build
+# nem começar.
+
+# pedacinho-frontend/ vive DENTRO da pasta do backend (mesmo nível de src/,
+# pom.xml, Dockerfile) — não é uma pasta irmã fora do contexto. Sem esta
+# exclusão, os dois frontends inteiros e pedacinho-frontend/uploads/ (imagens
+# do cardápio) são empacotados e enviados a cada build, mesmo nunca sendo
+# usados pelo backend em runtime (as imagens são servidas pelos Static Sites
+# da Render, não pelo Spring Boot). Esta é a causa raiz do problema relatado
+# no primeiro deploy.
+pedacinho-frontend/
+
+# Build output do Maven — não deve ir para o contexto; o próprio Dockerfile
+# gera isso de novo dentro do container, a partir do código-fonte.
+target/
+
+# Histórico do Git — irrelevante para o build, e pode ser grande.
+.git/
+.gitignore
+
+# Metadados de IDE — nada disso é usado pela aplicação em runtime.
+.idea/
+*.iml
+.vscode/
+
+# Arquivos de ambiente locais — nunca devem entrar em uma imagem Docker
+# (segredo real correria o risco de ficar cacheado em uma camada da imagem).
+.env
+.env.*
+
+# Arquivos de orquestração/deploy — não fazem parte do artefato Java, só são
+# lidos pelo Docker/Render por fora do container, nunca de dentro dele.
+Dockerfile
+docker-compose*.yaml
+docker-compose*.yml
+render.yaml
+
+# Documentação — não afeta o build nem o runtime.
+README*.md
+HELP.md
+
+# Logs e arquivos temporários comuns.
+*.log
+logs/
+*.tmp
+*.bak
+.DS_Store

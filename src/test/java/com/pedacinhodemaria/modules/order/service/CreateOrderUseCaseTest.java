@@ -16,7 +16,6 @@ import com.pedacinhodemaria.modules.order.dto.CreateOrderRequest;
 import com.pedacinhodemaria.modules.order.dto.OrderResponse;
 import com.pedacinhodemaria.modules.order.repository.OrderRepository;
 import com.pedacinhodemaria.modules.order.mapper.OrderMapper;
-import com.pedacinhodemaria.modules.order.service.PhoneNumberNormalizer;
 import com.pedacinhodemaria.modules.order.websocket.OrderEventPublisher;
 import com.pedacinhodemaria.shared.exception.InvalidPhoneNumberException;
 import com.pedacinhodemaria.shared.exception.InvalidPickupTimeException;

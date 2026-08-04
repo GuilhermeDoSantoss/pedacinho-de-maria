@@ -1,6 +1,5 @@
 package com.pedacinhodemaria.modules.menu.service;
 
-import com.pedacinhodemaria.modules.menu.domain.Drink;
 import com.pedacinhodemaria.modules.menu.domain.Meal;
 import com.pedacinhodemaria.modules.menu.dto.DrinkResponse;
 import com.pedacinhodemaria.modules.menu.dto.MealResponse;
