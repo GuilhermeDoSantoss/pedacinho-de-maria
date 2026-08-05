@@ -69,6 +69,12 @@ public class SecurityConfig {
                         .requestMatchers("/ws/**", "/ws-sockjs/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // Imagens do cardápio (pratos, bebidas etc.), servidas como
+                        // recurso estático. Restrito a GET/HEAD de propósito — é
+                        // conteúdo só-leitura; não há motivo pra POST/PUT/DELETE
+                        // nunca serem permitidos aqui, mesmo que algum handler futuro
+                        // viesse a aceitar esses métodos por engano nesse path.
+                        .requestMatchers(org.springframework.http.HttpMethod.GET, "/uploads/**").permitAll()
                         .anyRequest().denyAll()
                 );
 
