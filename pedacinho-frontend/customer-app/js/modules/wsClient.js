@@ -52,7 +52,13 @@ export class StompClient {
         this.#socket = new WebSocket(this.#url);
 
         this.#socket.onopen = () => {
-            this.#sendFrame('CONNECT', { 'accept-version': '1.2', host: 'localhost' });
+            // Header STOMP 'host' é metadado de virtual-hosting do protocolo,
+            // não afeta a URL de conexão real (essa já vem por parâmetro no
+            // construtor). O broker simples do Spring (ver WebSocketConfig)
+            // não valida esse valor, mas usar o hostname real da página em
+            // vez de 'localhost' fixo evita qualquer confusão futura ao
+            // inspecionar frames STOMP no DevTools em produção.
+            this.#sendFrame('CONNECT', { 'accept-version': '1.2', host: window.location.hostname });
         };
 
         this.#socket.onmessage = (event) => this.#handleFrame(event.data, onReady);
