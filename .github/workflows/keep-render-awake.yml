@@ -1,0 +1,18 @@
+name: Keep Render Backend Awake
+
+on:
+  schedule:
+    # Executa a cada 5 minutos
+    - cron: "*/5 * * * *"
+
+  workflow_dispatch:
+
+jobs:
+  keep-alive:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Ping Backend Health Endpoint
+        run: |
+          curl --fail --silent --show-error \
+          https://pedacinho-de-maria.onrender.com/actuator/health
