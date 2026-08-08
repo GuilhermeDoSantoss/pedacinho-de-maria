@@ -73,6 +73,7 @@ flowchart TD
     F -->|clicks phone number| C
     C -->|HTTP| G[WhatsApp Cloud API]
     G -->|direct message| H[📲 Customer's phone]
+    I[⏰ GitHub Actions<br/>health check every 5 min] -->|GET /actuator/health| C
 ```
 
 - **Customer Frontend** and **Kitchen Dashboard** are independent static applications, no framework, no build step — each with its own deploy cycle.
@@ -80,6 +81,7 @@ flowchart TD
 - **MongoDB Atlas** is the single database, in every environment — no local instance, no dependency on self-managed infrastructure.
 - **WebSocket (STOMP)** is what makes the order instantaneous in the kitchen, with no polling, and is also the channel that notifies the customer in real time when the order's status changes.
 - **WhatsApp Cloud API** is an external integration triggered by the Backend — a channel complementary to WebSocket: while WebSocket updates the screen the customer already has open, WhatsApp reaches the customer even after they've closed the tab.
+- **GitHub Actions** acts as a lightweight automation layer around deployment — a scheduled workflow performs a periodic health check against the backend to mitigate Render's free-tier cold start, without touching the frontend or running any business logic (see [Keep-Alive Strategy](#-keep-alive-strategy-cold-start-mitigation) under Deploy).
 
 ---
 
@@ -366,6 +368,7 @@ external provider shouldn't block the kitchen's workflow.
 | Deploy / Render | The backend needs to listen on the `PORT` injected by Render (not `SERVER_PORT`) | Nested fallback: `${PORT:${SERVER_PORT:8080}}` |
 | Drinks selected by the customer weren't showing up on the Kitchen Dashboard | The Dashboard's renderer never actually drew a drinks section on the ticket — the data already arrived correctly all the way to the API response layer, only the display was missing | `orderRenderer.js` now draws the "Drinks" section (with a "No drinks" fallback), following the same pattern already used for Extras |
 | Changing a `@RequiredArgsConstructor` constructor's signature silently breaks any manual instantiation | `OrderControllerTest` manually instantiated `OrderController` (standalone MockMvc); adding the new Use Case to the controller changed the arity of the Lombok-generated constructor, and the test stopped compiling | A new `@Mock` was added to the test and the instantiation updated to the 4 arguments — a good reminder that tests using `standaloneSetup` need to evolve alongside the controller's signature |
+| Backend going idle on Render's Free tier after periods without traffic, making the first request after that window noticeably slow | Render's Free tier suspends idle instances; the first request has to wait for the container to spin back up — expected infrastructure behavior tied to the plan's lifecycle, not an application defect | Scheduled GitHub Actions workflow (`keep-render-awake.yml`, every 5 minutes + manual `workflow_dispatch`) pinging `/actuator/health`, hardened with a retry policy (`--retry 5 --retry-delay 15 --retry-all-errors --max-time 120`) to absorb the brief `503` window while the instance wakes up — see [Keep-Alive Strategy](#-keep-alive-strategy-cold-start-mitigation) |
 
 ---
 
@@ -448,6 +451,45 @@ python3 -m http.server 5501
 | Kitchen Dashboard | Render — Static Site |
 | Database | MongoDB Atlas |
 | WhatsApp notification | WhatsApp Cloud API (Meta) — external integration, no self-hosted infrastructure |
+
+### 🩺 Keep-Alive Strategy (Cold Start Mitigation)
+
+On Render's Free tier, the backend Web Service can go idle after a period without incoming requests. When a customer opened the menu after that idle window, the first request had to wait for the instance to spin back up — a real, observed characteristic of the hosting plan's lifecycle, not an application bug.
+
+To reduce how often a customer actually runs into that cold start, a scheduled GitHub Actions workflow (`.github/workflows/keep-render-awake.yml`) pings the backend on a fixed interval:
+
+```yaml
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+```
+
+Roughly every 5 minutes, GitHub Actions sends a request to:
+
+```
+GET https://pedacinho-de-maria.onrender.com/actuator/health
+```
+
+**Why `/actuator/health` specifically:** it's the lightest endpoint that still exercises the running Spring Boot application. The workflow never touches the frontend and never runs any business logic — its only job is confirming the backend process is alive and responsive, which is exactly the level of observability this problem needed, nothing more.
+
+**Handling the cold-start window itself:** during implementation, the first request against a cold instance could return `HTTP 503 Service Unavailable` while Render was still bringing the container back up. To absorb that window instead of just failing once, the workflow was hardened with a retry policy:
+
+```bash
+curl --retry 5 --retry-delay 15 --retry-all-errors --max-time 120 \
+  https://pedacinho-de-maria.onrender.com/actuator/health
+```
+
+| Flag | Role |
+|---|---|
+| `--retry 5` | Retries the request up to 5 times if it fails |
+| `--retry-delay 15` | Waits 15 seconds between attempts, giving the instance time to finish waking up |
+| `--retry-all-errors` | Also retries on error types `curl` wouldn't retry by default — including a `503` from a still-starting instance |
+| `--max-time 120` | Caps how long a single request attempt can run, so a stuck attempt doesn't hang the workflow indefinitely |
+
+**Benefit and limitation:** this reduces the odds of a customer being the one to hit a fully idle backend after a quiet period — it's a cold-start **mitigation**, not a guarantee that the service stays permanently warm. If the workflow doesn't run for any reason (GitHub Actions outage, a disabled workflow), the backend keeps working exactly as before; it just goes back to depending on Render's own cold-start behavior.
+
+---
 
 ---
 
